@@ -1,0 +1,126 @@
+/* Common Styles */
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Vollkorn", serif;
+  list-style-type: none;
+  text-decoration: none;
+  box-sizing: border-box;
+  outline: none;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+:root {
+  --primary-color: #2b81e4;
+  --secondary-color: #eee;
+  --white-color: #fff;
+  --grey-color: #555;
+  --light-grey-color: #777;
+}
+
+
+.container {
+  background-color: var(--secondary-color);
+  margin: 3.5rem;
+  box-shadow: 0 1rem 3rem var(--grey-color);
+  overflow: hidden;
+}
+
+/* Popular tours */
+.popular-tours {
+  padding: 5rem 0 10rem 0;
+}
+
+.popular-tours-heading {
+  font-size: 8rem;
+  text-align: center;
+  margin-bottom: 8rem;
+  color: var(--primary-color);
+  text-shadow: 0 0.1rem 0.2rem var(--primary-color);
+}
+
+.cards-wrapper {
+  display:grid;
+    grid-template-columns: repeat(3,1fr);
+   
+}
+
+.card {
+  width: 35rem;
+  position: relative;
+  perspective: 150rem;
+  margin-left: 50px;
+  margin-bottom: 50px;
+}
+
+.card-image {
+  width: 100%;
+  border-radius: 0.3rem 0.3rem 0 0;
+}
+
+.front-side {
+  text-align: center;
+  background-color: var(--white-color);
+  border-radius: 0.3rem;
+  position: relative;
+  z-index: 10;
+  opacity: 1;
+  transition: opacity 0.4s, transform 0.4s, box-shadow 0.4s;
+}
+
+.change > .front-side {
+  transform: translateZ(-5rem) translateX(3rem);
+  box-shadow: 0 2rem 4rem #777;
+  opacity: 0.5;
+  z-index: 0;
+}
+
+.tour-name {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  position: absolute;
+  top: 85%;
+  right: 1.5rem;
+  color: var(--white-color);
+  text-shadow: 0 0 1rem #000;
+}
+/* End of Popular tours */
+
+@media (max-width: 1200px) {
+  .cards-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    margin: 3rem 0;
+  }
+
+  .header-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+
+  .popular-tours-heading {
+    font-size: 6rem;
+  }
+}
+
+@media (max-width: 800px) {
+
+  .popular-tours-heading {
+    font-size: 5rem;
+  }
+}
+@media (max-width: 500px) {
+  html {
+    font-size: 45%;
+  }
+}
