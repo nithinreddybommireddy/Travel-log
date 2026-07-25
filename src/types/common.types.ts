@@ -1,0 +1,20 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface Booking {
+  id: string;
+  tourId: string;
+  tourName: string;
+  travelers: number;
+  startDate: string;
+  totalPaid: number;
+  discount: number;
+  coupon: string | null;
+  bookedAt: number;
+  status: string;
+}
+
+export type Theme = "dark" | "light";
