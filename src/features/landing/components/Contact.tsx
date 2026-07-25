@@ -4,8 +4,8 @@ import { Send, Mail, Phone, MapPin, CheckCircle2, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/lib/toast-context";
-import { sendContactEmail, subscribeNewsletter } from "@/lib/email";
+import { useToast } from "@/hooks/use-toast";
+import { sendContactEmail, subscribeNewsletter } from "@/services/email-service";
 
 export function Contact() {
   const { showToast } = useToast();

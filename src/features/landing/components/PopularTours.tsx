@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Users, Star, ArrowRight, ArrowLeft, Flame, Sparkles, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { tours, getPriceTierInfo, type PriceTier } from "@/data/tours";
+import { tours, getPriceTierInfo, type PriceTier } from "@/features/tours/data/tours";
 import { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 
 const difficultyColors = {
   easy: "success",
