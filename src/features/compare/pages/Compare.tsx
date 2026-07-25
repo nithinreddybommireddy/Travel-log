@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Star, Clock, Users, Shield, DollarSign, CheckCircle2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { tours } from "@/data/tours";
+import { tours } from "@/features/tours/data/tours";
 
 const difficultyScores = { easy: 2, medium: 4, hard: 6 };
 const maxPrice = Math.max(...tours.map((t) => t.price));

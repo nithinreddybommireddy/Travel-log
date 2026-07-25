@@ -7,10 +7,10 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { tours } from "@/data/tours";
-import { useAuth } from "@/lib/auth-context";
-import { useSavedTours, useMoodBoards, useTripPlans } from "@/lib/storage";
-import { getEmailHistory } from "@/lib/email";
+import { tours } from "@/features/tours/data/tours";
+import { useAuth } from "@/features/auth/services/auth-context";
+import { useSavedTours, useMoodBoards, useTripPlans } from "@/services/storage-service";
+import { getEmailHistory } from "@/services/email-service";
 
 interface Booking {
   id: string;

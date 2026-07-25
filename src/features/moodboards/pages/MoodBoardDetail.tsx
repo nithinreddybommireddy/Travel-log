@@ -5,9 +5,9 @@ import { ArrowLeft, MapPin, Star, Plus, X, Trash2, Lock, Globe, Edit3, MessageSq
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { tours } from "@/data/tours";
-import { useAuth } from "@/lib/auth-context";
-import { useMoodBoards } from "@/lib/storage";
+import { tours } from "@/features/tours/data/tours";
+import { useAuth } from "@/features/auth/services/auth-context";
+import { useMoodBoards } from "@/services/storage-service";
 
 export function MoodBoardDetailPage() {
   const { id } = useParams();
