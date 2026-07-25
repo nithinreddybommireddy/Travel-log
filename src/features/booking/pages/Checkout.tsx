@@ -8,10 +8,10 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { tours } from "@/data/tours";
-import { offerCodes, specialOffers, validateOfferCode } from "@/data/offers";
-import { useToast } from "@/lib/toast-context";
-import { sendBookingConfirmation } from "@/lib/email";
+import { tours } from "@/features/tours/data/tours";
+import { offerCodes, specialOffers, validateOfferCode } from "@/features/booking/data/offers";
+import { useToast } from "@/hooks/use-toast";
+import { sendBookingConfirmation } from "@/services/email-service";
 
 type PaymentMethod = "card" | "upi" | "netbanking";
 

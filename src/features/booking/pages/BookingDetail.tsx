@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TourMap } from "@/components/ui/tour-map";
 import { ShortTripsSection } from "@/components/ui/short-trips-section";
-import { tours } from "@/data/tours";
-import { downloadItinerary } from "@/lib/download-itinerary";
+import { tours } from "@/features/tours/data/tours";
+import { downloadItinerary } from "@/utils/download-itinerary";
 
 interface Booking {
   id: string;
