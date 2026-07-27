@@ -145,6 +145,8 @@ export function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [datePage, setDatePage] = useState(0);
 
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+
   const [offerInput, setOfferInput] = useState("");
   const [appliedOffer, setAppliedOffer] = useState<{ code: string; discount: number } | null>(null);
   const [offerError, setOfferError] = useState("");
@@ -1061,42 +1063,46 @@ export function CheckoutPage() {
                     </div>
                     <div>
                       <h2 className="font-semibold text-lg">Payment</h2>
-                      <p className="text-xs text-text-muted">Pay securely via Razorpay</p>
+                      <p className="text-xs text-text-muted">Choose your preferred payment method</p>
                     </div>
                   </div>
 
-                  {/* Payment Methods Display */}
+                  {/* Payment Methods - Clickable Cards */}
+                  <p className="text-xs font-medium text-text-muted">Select a payment method:</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-accent/30 bg-accent/5">
-                      <Smartphone className="w-8 h-8 text-accent" />
-                      <div className="text-center">
-                        <p className="font-semibold text-sm">UPI</p>
-                        <p className="text-[10px] text-text-muted">GPay, PhonePe, Paytm</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-border-light bg-surface-lighter/20">
-                      <CreditCard className="w-8 h-8 text-text-muted" />
-                      <div className="text-center">
-                        <p className="font-semibold text-sm">Cards</p>
-                        <p className="text-[10px] text-text-muted">Credit / Debit</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-border-light bg-surface-lighter/20">
-                      <Building2 className="w-7 h-7 text-text-muted" />
-                      <div className="text-center">
-                        <p className="font-semibold text-xs">Net Banking</p>
-                        <p className="text-[10px] text-text-muted">All banks supported</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-border-light bg-surface-lighter/20">
-                      <Wallet className="w-7 h-7 text-text-muted" />
-                      <div className="text-center">
-                        <p className="font-semibold text-xs">Wallet</p>
-                        <p className="text-[10px] text-text-muted">Paytm, Amazon Pay</p>
-                      </div>
-                    </div>
+                    {[
+                      { id: "upi", icon: Smartphone, label: "UPI", desc: "GPay, PhonePe, Paytm", color: true },
+                      { id: "cards", icon: CreditCard, label: "Cards", desc: "Credit / Debit", color: false },
+                      { id: "netbanking", icon: Building2, label: "Net Banking", desc: "All banks supported", color: false },
+                      { id: "wallet", icon: Wallet, label: "Wallet", desc: "Paytm, Amazon Pay", color: false },
+                    ].map((method) => {
+                      const Icon = method.icon;
+                      const isSel = selectedPayment === method.id;
+                      return (
+                        <button
+                          key={method.id}
+                          type="button"
+                          onClick={() => setSelectedPayment(method.id)}
+                          className={
+                            "flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 " +
+                            (isSel
+                              ? "border-accent bg-accent/10 shadow-md shadow-accent/10 scale-[1.02]"
+                              : "border-border-light bg-surface-lighter/20 hover:border-accent/40 hover:bg-accent/5")
+                          }
+                        >
+                          <Icon className={"w-8 h-8 " + (isSel ? "text-accent" : "text-text-muted")} />
+                          <div className="text-center">
+                            <p className={"font-semibold text-sm " + (isSel ? "text-accent" : "")}>{method.label}</p>
+                            <p className="text-[10px] text-text-muted">{method.desc}</p>
+                          </div>
+                          {isSel && (
+                            <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center">
+                              <CheckCircle2 className="w-3 h-3" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <p className="text-[11px] text-text-muted text-center">
