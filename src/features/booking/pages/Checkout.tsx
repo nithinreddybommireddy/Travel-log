@@ -83,6 +83,10 @@ export function CheckoutPage() {
     specialRequests: savedDraft?.specialRequests ?? "",
   }));
 
+  // Ref to always have the latest booking data (avoids stale closures)
+  const bookingRef = useRef(booking);
+  bookingRef.current = booking;
+
   // Step tracker — declared BEFORE effects that reference it
   const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
 
@@ -227,11 +231,13 @@ export function CheckoutPage() {
   };
 
   const handlePay = () => {
+    // Use ref to get the absolute latest booking data
+    const b = bookingRef.current;
     // Validate required fields with specific error messages
     const errors: { name?: string; email?: string; date?: string } = {};
-    if (!booking.customerName?.trim()) errors.name = "Name is required";
-    if (!booking.customerEmail?.trim()) errors.email = "Email is required";
-    if (!booking.startDate) errors.date = "Start date is required";
+    if (!b.customerName?.trim()) errors.name = "Name is required";
+    if (!b.customerEmail?.trim()) errors.email = "Email is required";
+    if (!b.startDate) errors.date = "Start date is required";
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -250,16 +256,16 @@ export function CheckoutPage() {
       id: bookingId,
       tourId: tour.id,
       tourName: tour.name,
-      travelers: booking.travelers,
-      startDate: booking.startDate,
+      travelers: b.travelers,
+      startDate: b.startDate,
       totalPaid: total,
       discount: discount,
       coupon: appliedOffer?.code || null,
       bookedAt: Date.now(),
       status: "confirmed",
-      customerName: booking.customerName,
-      customerEmail: booking.customerEmail,
-      customerPhone: booking.customerPhone,
+      customerName: b.customerName,
+      customerEmail: b.customerEmail,
+      customerPhone: b.customerPhone,
     };
     try {
       const existing = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
