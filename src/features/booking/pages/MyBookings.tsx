@@ -328,7 +328,7 @@ export function MyBookingsPage() {
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {booking.travelerDetails.map((t, i) => (
                             <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-lighter/40 border border-border-light text-text-muted">
-                              {t.name || `T${i + 1}`}{t.age ? ` (${t.age})` : ""}
+                              {t.name || `T${i + 1}`}{t.age ? ` (${t.age})` : ""}{t.gender ? ` · ${t.gender}` : ""}{t.location ? ` · 📍${t.location}` : ""}
                             </span>
                           ))}
                         </div>

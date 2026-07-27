@@ -525,10 +525,17 @@ export function BookingDetailPage() {
                     <div className="pt-2 border-t border-border-light">
                       <div className="text-[10px] text-text-muted mb-2 font-medium uppercase tracking-wider">Traveler Details</div>
                       {booking.travelerDetails.map((t, i) => (
-                        <div key={i} className="flex items-center gap-2 py-1.5 text-sm">
-                          <Users className="w-3 h-3 text-accent shrink-0" />
-                          <span className="text-text-secondary">{t.name || `Traveler ${i + 1}`}</span>
-                          {t.age && <span className="text-text-muted text-xs">· {t.age} yrs</span>}
+                        <div key={i} className="py-2 text-sm border-b border-border-light last:border-b-0">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-3 h-3 text-accent shrink-0" />
+                            <span className="font-medium text-text-primary">{t.name || `Traveler ${i + 1}`}</span>
+                            {t.age && <span className="text-text-muted text-xs">· {t.age} yrs</span>}
+                            {t.gender && <span className="text-text-muted text-xs">· {t.gender}</span>}
+                          </div>
+                          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-text-muted ml-5">
+                            {t.phone && <span>📞 {t.phone}</span>}
+                            {t.location && <span>📍 {t.location}</span>}
+                          </div>
                         </div>
                       ))}
                     </div>
