@@ -1031,50 +1031,82 @@ export function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Payment Section - UPI Only */}
-                <div className="mt-6 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 space-y-5">
+                {/* Payment Section - QR + UPI + Cards */}
+                <div className="mt-6 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
                       <Smartphone className="w-6 h-6 text-green-400" />
                     </div>
                     <div>
-                      <h2 className="font-semibold text-lg">UPI Payment</h2>
-                      <p className="text-xs text-text-muted">Pay directly via GPay, PhonePe, Paytm or any UPI app</p>
+                      <h2 className="font-semibold text-lg">Payment</h2>
+                      <p className="text-xs text-text-muted">Scan QR or pay via UPI / Cards / Net Banking</p>
                     </div>
                   </div>
 
-                  {/* UPI ID Display */}
-                  <div className="bg-surface-lighter/30 border-2 border-dashed border-green-500/30 rounded-xl p-5 text-center space-y-3">
-                    <p className="text-xs text-text-muted">Send payment to this UPI ID:</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-2xl font-bold text-green-400 tracking-wide">{UPI_ID}</span>
+                  {/* QR Code + UPI ID Side by Side */}
+                  <div className="flex flex-col sm:flex-row items-center gap-6 bg-surface-lighter/30 border-2 border-dashed border-green-500/30 rounded-xl p-6">
+                    {/* QR Code */}
+                    <div className="shrink-0 bg-white rounded-xl p-2 shadow-sm">
+                      <img
+                        src={"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent("upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name))}
+                        alt="Scan to pay via UPI"
+                        className="w-40 h-40 sm:w-44 sm:h-44 rounded-lg"
+                      />
                     </div>
-                    <p className="text-sm font-medium">Amount: <span className="text-accent text-xl">₹{total.toLocaleString()}</span></p>
-                    <div className="flex gap-3 justify-center">
-                      <Button
-                        variant="secondary" className="gap-2"
-                        onClick={() => {
-                          navigator.clipboard.writeText(UPI_ID);
-                          showToast("UPI ID copied! 📋", "success");
-                        }}
-                      >
-                        <CheckCircle2 className="w-4 h-4" /> Copy UPI ID
-                      </Button>
-                      <Button
-                        className="gap-2 bg-green-500 hover:bg-green-600 text-white"
-                        onClick={() => {
-                          const upiUrl = "upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name);
-                          window.open(upiUrl, "_blank");
-                          handlePay();
-                        }}
-                      >
-                        <Smartphone className="w-4 h-4" /> Pay ₹{total.toLocaleString()}
-                      </Button>
+
+                    {/* UPI Details */}
+                    <div className="flex-1 text-center sm:text-left space-y-3">
+                      <div>
+                        <p className="text-xs text-text-muted mb-1">Scan QR with any UPI app</p>
+                        <p className="text-lg font-bold text-green-400 break-all">{UPI_ID}</p>
+                      </div>
+                      <div className="text-sm font-medium">
+                        Amount: <span className="text-accent text-xl font-bold">₹{total.toLocaleString()}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                        <Button
+                          variant="secondary" className="gap-1.5 text-xs h-9"
+                          onClick={() => {
+                            navigator.clipboard.writeText(UPI_ID);
+                            showToast("UPI ID copied! 📋", "success");
+                          }}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Copy UPI ID
+                        </Button>
+                        <Button
+                          className="gap-1.5 text-xs h-9 bg-green-500 hover:bg-green-600 text-white"
+                          onClick={() => {
+                            const upiUrl = "upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name);
+                            window.open(upiUrl, "_blank");
+                            handlePay();
+                          }}
+                        >
+                          <Smartphone className="w-3.5 h-3.5" /> Pay ₹{total.toLocaleString()}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
-                  <p className="text-[10px] text-text-muted text-center pt-2">
-                    🔒 After paying, your booking will be confirmed instantly and a confirmation will be sent to your email.
+                  {/* Payment Methods Display */}
+                  <div>
+                    <p className="text-xs text-text-muted text-center mb-3">Accepted payment methods:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { label: "UPI", sub: "GPay, PhonePe" },
+                        { label: "Cards", sub: "Credit/Debit" },
+                        { label: "Net Banking", sub: "All banks" },
+                        { label: "Wallet", sub: "Paytm, Amazon" },
+                      ].map((m) => (
+                        <div key={m.label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-surface-lighter/30 border border-border-light">
+                          <span className="text-xs font-semibold text-text-primary">{m.label}</span>
+                          <span className="text-[9px] text-text-muted text-center leading-tight">{m.sub}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-text-muted text-center">
+                    🔒 After paying, your booking will be confirmed instantly.
                   </p>
                 </div>
 
