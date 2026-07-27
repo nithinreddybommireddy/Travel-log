@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Shield, CreditCard, Smartphone, Building2,
@@ -25,6 +25,34 @@ interface BookingState {
   specialRequests: string;
 }
 
+const DRAFT_KEY = "travellog_checkout_draft";
+
+function loadDraft(tourId: string): Partial<BookingState> | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Only restore draft for the same tour
+    if (data._tourId !== tourId) {
+      localStorage.removeItem(DRAFT_KEY);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(tourId: string, data: BookingState) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...data, _tourId: tourId, _savedAt: Date.now() }));
+  } catch { /* ignore quota errors */ }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
+
 export function CheckoutPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,15 +64,43 @@ export function CheckoutPage() {
   // Pre-fill from Quick Rebook params
   const rebookTravelers = Math.max(1, parseInt(searchParams.get("travelers") || "1", 10));
 
+  // Load saved draft on mount
+  const savedDraft = useMemo(() => (id ? loadDraft(id) : null), [id]);
+
   // Booking form state
-  const [booking, setBooking] = useState<BookingState>({
-    travelers: Math.min(rebookTravelers, tour?.maxPeople || 30),
-    startDate: "",
-    customerName: "",
-    customerEmail: "",
-    customerPhone: "",
-    specialRequests: "",
-  });
+  const [booking, setBooking] = useState<BookingState>(() => ({
+    travelers: savedDraft?.travelers ?? Math.min(rebookTravelers, tour?.maxPeople || 30),
+    startDate: savedDraft?.startDate ?? "",
+    customerName: savedDraft?.customerName ?? "",
+    customerEmail: savedDraft?.customerEmail ?? "",
+    customerPhone: savedDraft?.customerPhone ?? "",
+    specialRequests: savedDraft?.specialRequests ?? "",
+  }));
+
+  // Step tracker — declared BEFORE effects that reference it
+  const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
+
+  // Field validation errors
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; date?: string }>({});
+
+  // Auto-save draft on changes (debounced)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  useEffect(() => {
+    if (!id || step !== "form") return;
+    // Debounce: wait 500ms after last change before saving
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveDraft(id, booking);
+      setDraftSaved(true);
+      // Reset the "saved" indicator after 2s
+      setTimeout(() => setDraftSaved(false), 2000);
+    }, 500);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [id, booking, step]);
 
   // Offer code state
   const [offerInput, setOfferInput] = useState("");
@@ -58,10 +114,6 @@ export function CheckoutPage() {
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [cardName, setCardName] = useState("");
-  const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
-
-  // Field validation errors
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; date?: string }>({});
 
   if (!tour) {
     return (
@@ -190,6 +242,7 @@ export function CheckoutPage() {
     // Simulate payment processing
     setTimeout(() => {
       setStep("confirmed");
+      clearDraft();
       // Save booking to localStorage
       const bookings = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
       bookings.unshift({
@@ -397,6 +450,11 @@ export function CheckoutPage() {
               <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
                 <h2 className="font-semibold flex items-center gap-2">
                   <Users className="w-4 h-4 text-accent" /> Traveler Details
+                  {draftSaved && (
+                    <span className="ml-auto text-[10px] text-green-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Saved
+                    </span>
+                  )}
                 </h2>
                 <div id="traveler-form" className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
