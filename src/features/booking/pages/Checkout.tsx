@@ -458,7 +458,8 @@ export function CheckoutPage() {
             </p>
             {booking.customerPhone ? (
               <div className="flex gap-2 mb-3">
-                <input type="tel" placeholder="Your phone number" defaultValue={booking.customerPhone} id="notify-phone"
+                <label htmlFor="notify-phone" className="sr-only">Phone Number for WhatsApp/SMS</label>
+                <input type="tel" placeholder="Your phone number" defaultValue={booking.customerPhone} id="notify-phone" name="notifyPhone" autoComplete="tel"
                   className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-400/50 transition-colors" maxLength={10} />
                 <Button variant="secondary" className="gap-2 shrink-0 bg-green-500/10 hover:bg-green-500/20 border-green-500/30 text-green-400"
                   onClick={() => {
@@ -504,8 +505,9 @@ export function CheckoutPage() {
             </div>
             <p className="text-xs text-text-secondary mb-3">We'll send your booking details directly to your inbox.</p>
             <div className="flex gap-2">
-              <input type="email" placeholder="your@email.com" defaultValue={booking.customerEmail} id="confirm-email" name="confirmEmail" autoComplete="email"
-                className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+              <label htmlFor="confirm-email" className="sr-only">Email for confirmation</label>
+                <input type="email" placeholder="your@email.com" defaultValue={booking.customerEmail} id="confirm-email" name="confirmEmail" autoComplete="email"
+                  className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
               <Button variant="secondary" className="gap-2 shrink-0" onClick={() => {
                 const email = (document.getElementById("confirm-email") as HTMLInputElement)?.value.trim();
                 if (!email || !email.includes("@")) { showToast("Please enter a valid email address", "info"); return; }
@@ -866,7 +868,8 @@ export function CheckoutPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <Building2 className="w-5 h-5 text-accent" /><span className="font-semibold text-sm">Net Banking</span>
                   </div>
-                  <select className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors">
+                  <label htmlFor="netbankingBank" className="sr-only">Select your bank</label>
+                  <select id="netbankingBank" name="netbankingBank" className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors">
                     <option value="">Select your bank</option>
                     {["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra", "Yes Bank", "PNB", "Canara Bank"].map((bank) => (
                       <option key={bank} value={bank}>{bank}</option>
@@ -960,7 +963,7 @@ export function CheckoutPage() {
                   ) : (
                     <>
                       <div className="flex gap-2">
-                        <input type="text" placeholder="Enter code" value={offerInput}
+                        <input type="text" id="couponCode" name="couponCode" autoComplete="off" placeholder="Enter code" value={offerInput}
                           onChange={(e) => { setOfferInput(e.target.value.toUpperCase()); setOfferError(""); }}
                           onKeyDown={(e) => e.key === "Enter" && handleApplyOffer()}
                           className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-3 py-2 text-sm outline-none focus:border-accent/50 transition-colors uppercase" />
