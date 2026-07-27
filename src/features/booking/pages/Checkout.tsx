@@ -120,6 +120,19 @@ export function CheckoutPage() {
     }
   }, [booking.travelers]);
 
+  // Auto-fill Traveler 1's name from the main booker's name
+  useEffect(() => {
+    if (
+      booking.customerName?.trim() &&
+      booking.travelerDetails.length > 0 &&
+      !booking.travelerDetails[0].name?.trim()
+    ) {
+      const updated = [...booking.travelerDetails];
+      updated[0] = { ...updated[0], name: booking.customerName };
+      setBooking(prev => ({ ...prev, travelerDetails: updated }));
+    }
+  }, [booking.customerName]);
+
   // Ref to always have the latest booking data (avoids stale closures)
   const bookingRef = useRef(booking);
   bookingRef.current = booking;
