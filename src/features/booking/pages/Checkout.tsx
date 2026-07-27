@@ -1069,7 +1069,7 @@ export function CheckoutPage() {
                         onClick={() => {
                           const upiUrl = "upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name);
                           window.open(upiUrl, "_blank");
-                          showToast("UPI app opened! 💚", "success");
+                          handlePay();
                         }}
                       >
                         <Smartphone className="w-4 h-4" /> Pay ₹{total.toLocaleString()}
@@ -1077,16 +1077,8 @@ export function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* After Payment */}
-                  <div className="text-center p-4 rounded-xl bg-accent/5 border border-accent/20">
-                    <p className="text-xs text-text-muted mb-3">After making the payment, click below to confirm your booking:</p>
-                    <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
-                      <CheckCircle2 className="w-5 h-5" /> I've Paid — Confirm Booking
-                    </Button>
-                  </div>
-
-                  <p className="text-[10px] text-text-muted text-center">
-                    🔒 Your payment is processed directly through your UPI app. We never store your payment details.
+                  <p className="text-[10px] text-text-muted text-center pt-2">
+                    🔒 After paying, your booking will be confirmed instantly and a confirmation will be sent to your email.
                   </p>
                 </div>
 
