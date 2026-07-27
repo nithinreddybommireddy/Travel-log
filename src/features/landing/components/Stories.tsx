@@ -39,7 +39,7 @@ const stories = [
 
 export function Stories() {
   return (
-    <section id="about" className="relative py-24 overflow-hidden">
+    <section id="stories" className="relative py-24 overflow-hidden">
       {/* Background Video Effect */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-surface to-surface-light" />

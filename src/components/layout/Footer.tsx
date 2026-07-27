@@ -44,14 +44,14 @@ const footerLinks = {
   tours: [
     { label: "Popular Tours", href: "/#tours" },
     { label: "All Destinations", href: "/tours" },
-    { label: "Short Trips", href: "/tours" },
+    { label: "Mood Boards", href: "/mood-boards" },
     { label: "Compare Destinations", href: "/compare" },
   ],
   support: [
     { label: "Contact Us", href: "/#contact" },
-    { label: "FAQs", href: "/tours" },
-    { label: "Booking Guide", href: "/tours" },
-    { label: "Terms & Conditions", href: "/tours" },
+    { label: "Traveler Stories", href: "/#stories" },
+    { label: "Why TravelLog", href: "/#about" },
+    { label: "Privacy Policy", href: "/#about" },
   ],
 };
 

@@ -48,16 +48,16 @@ describe("Footer Component", () => {
     renderFooter();
     expect(screen.getByText("Popular Tours")).toBeInTheDocument();
     expect(screen.getByText("All Destinations")).toBeInTheDocument();
-    expect(screen.getByText("Short Trips")).toBeInTheDocument();
+    expect(screen.getByText("Mood Boards")).toBeInTheDocument();
     expect(screen.getByText("Compare Destinations")).toBeInTheDocument();
   });
 
   it("renders the Support section with all links", () => {
     renderFooter();
     expect(screen.getByText("Contact Us")).toBeInTheDocument();
-    expect(screen.getByText("FAQs")).toBeInTheDocument();
-    expect(screen.getByText("Booking Guide")).toBeInTheDocument();
-    expect(screen.getByText("Terms & Conditions")).toBeInTheDocument();
+    expect(screen.getByText("Traveler Stories")).toBeInTheDocument();
+    expect(screen.getByText("Why TravelLog")).toBeInTheDocument();
+    expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
   });
 
   it("renders hash links (/#about, /#tours, /#contact) as anchor tags with correct hrefs", () => {
@@ -169,8 +169,10 @@ describe("Footer Component", () => {
   it("Brand logo links to home page", () => {
     renderFooter();
     // The TravelLog brand text is split across elements with "Travel" and "Log"
-    // Find all links and find the one pointing to "/"
-    const brandLink = screen.getByRole("link", { name: /travel/i });
-    expect(brandLink).toHaveAttribute("href", "/");
+    // Use getAllByRole and find the one with href="/"
+    const allLinks = screen.getAllByRole("link");
+    const brandLink = allLinks.find((link) => link.getAttribute("href") === "/");
+    expect(brandLink).toBeDefined();
+    expect(brandLink).toHaveTextContent(/travel/i);
   });
 });
