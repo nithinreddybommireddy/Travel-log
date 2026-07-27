@@ -7,6 +7,7 @@ export interface User {
 export interface TravelerInfo {
   name: string;
   age: string;
+  gender: string;
   phone: string;
 }
 
