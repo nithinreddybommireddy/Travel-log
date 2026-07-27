@@ -350,7 +350,20 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
+    <div className="min-h-screen pt-20 pb-24 lg:pb-16">
+      {/* Sticky Bottom Bar - Always visible on mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-surface/95 backdrop-blur-xl border-t border-border-light px-4 py-3 shadow-2xl">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-text-muted">Total Amount</p>
+            <p className="text-lg font-bold text-accent">₹{total.toLocaleString()}</p>
+          </div>
+          <Button size="default" className="gap-2 shrink-0 min-w-[130px]" onClick={handlePay}>
+            <Wallet className="w-4 h-4" /> Pay Now
+          </Button>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <Link to={`/tours/${tour.id}`}
@@ -600,6 +613,17 @@ export function CheckoutPage() {
                 <Shield className="w-4 h-4 text-green-400" />
                 Your payment is secured with 256-bit SSL encryption.
               </motion.div>
+
+              {/* Pay Now Button - Bottom of Form (visible on all screens) */}
+              <motion.div variants={itemVariants} className="lg:hidden">
+                <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
+                  <Wallet className="w-5 h-5" /> Pay ₹{total.toLocaleString()}
+                </Button>
+                <p className="text-[10px] text-text-muted text-center mt-2">
+                  <Shield className="w-3 h-3 inline mr-0.5" />
+                  Secure payment · You can cancel within 24 hours
+                </p>
+              </motion.div>
             </motion.div>
           </div>
 
@@ -710,8 +734,8 @@ export function CheckoutPage() {
                   )}
                 </div>
 
-                {/* Pay Now Button */}
-                <div className="px-5 pb-5">
+                {/* Pay Now Button (desktop only - in sidebar) */}
+                <div className="px-5 pb-5 hidden lg:block">
                   <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
                     <Wallet className="w-5 h-5" /> Pay ₹{total.toLocaleString()}
                   </Button>
