@@ -11,6 +11,7 @@ import { ComparePage } from "@/features/compare/pages/Compare";
 import { ShortTripsPage } from "@/features/tours/pages/ShortTrips";
 import { CheckoutPage } from "@/features/booking/pages/Checkout";
 import { BookingDetailPage } from "@/features/booking/pages/BookingDetail";
+import { TripPhotosPage } from "@/features/tripphotos/pages/TripPhotos";
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   return (
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="/tours/:id/short-trips" element={<PageTransition><ShortTripsPage /></PageTransition>} />
         <Route path="/checkout/:id" element={<PageTransition><CheckoutPage /></PageTransition>} />
         <Route path="/booking/:id" element={<PageTransition><BookingDetailPage /></PageTransition>} />
+        <Route path="/trip-photos" element={<PageTransition><TripPhotosPage /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );

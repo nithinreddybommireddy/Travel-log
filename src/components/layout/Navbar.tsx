@@ -5,7 +5,7 @@ import {
   Compass, Menu, X, LogOut, MapPin, LayoutDashboard,
   Layout, BarChart3, User, Search, ArrowRight, Command,
   Clock, Tag, Star, Flame, IndianRupee, ArrowUpDown,
-  Sun, Moon,
+  Sun, Moon, Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
@@ -16,12 +16,14 @@ import { tours, type Tour } from "@/features/tours/data/tours";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Tours", href: "/tours" },
+  { label: "Trip Photos", href: "/trip-photos" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Compare", href: "/compare" },
 ];
 
 const dashboardLinks = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Trip Photos", href: "/trip-photos", icon: Camera },
   { label: "Mood Boards", href: "/mood-boards", icon: Layout },
   { label: "Compare", href: "/compare", icon: BarChart3 },
 ];
