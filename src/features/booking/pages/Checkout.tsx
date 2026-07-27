@@ -242,38 +242,37 @@ export function CheckoutPage() {
       return;
     }
     setFieldErrors({});
+    clearDraft();
+
+    // Save booking to localStorage IMMEDIATELY (before the processing timeout)
+    const bookingId = Date.now().toString(36);
+    const newBooking = {
+      id: bookingId,
+      tourId: tour.id,
+      tourName: tour.name,
+      travelers: booking.travelers,
+      startDate: booking.startDate,
+      totalPaid: total,
+      discount: discount,
+      coupon: appliedOffer?.code || null,
+      bookedAt: Date.now(),
+      status: "confirmed",
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      customerPhone: booking.customerPhone,
+    };
+    try {
+      const existing = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
+      existing.unshift(newBooking);
+      localStorage.setItem("travellog_bookings", JSON.stringify(existing.slice(0, 50)));
+    } catch { /* ignore localStorage errors */ }
+
     setStep("processing");
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    // Simulate payment processing
+    // Simulate payment processing — only for the visual transition
     setTimeout(() => {
       setStep("confirmed");
-      clearDraft();
-      // Save booking to localStorage
-      const bookings = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
-      bookings.unshift({
-        id: Date.now().toString(36),
-        tourId: tour.id,
-        tourName: tour.name,
-        travelers: booking.travelers,
-        startDate: booking.startDate,
-        totalPaid: total,
-        discount: discount,
-        coupon: appliedOffer?.code || null,
-        bookedAt: Date.now(),
-        status: "confirmed",
-        customerName: booking.customerName,
-        customerEmail: booking.customerEmail,
-        customerPhone: booking.customerPhone,
-      });
-      // Also sync to the Booking type used across the app
-      try {
-        const existing = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
-        if (!existing.find((b: any) => b.id === bookings[0].id)) {
-          localStorage.setItem("travellog_bookings", JSON.stringify(bookings.slice(0, 50)));
-        }
-      } catch { /* ignore */ }
-      localStorage.setItem("travellog_bookings", JSON.stringify(bookings.slice(0, 50)));
       showToast("Booking confirmed! 🎉", "success");
     }, 2500);
   };
