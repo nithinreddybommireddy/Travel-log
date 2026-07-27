@@ -25,6 +25,7 @@ import { initiateRazorpayPayment } from "@/services/razorpayService";
 interface TravelerInfo {
   name: string;
   age: string;
+  gender: string;
   phone: string;
 }
 
@@ -85,7 +86,7 @@ export function CheckoutPage() {
   const getInitialTravelerDetails = (count: number, saved?: TravelerInfo[]): TravelerInfo[] => {
     const details: TravelerInfo[] = [];
     for (let i = 0; i < count; i++) {
-      details.push(saved?.[i] ?? { name: "", age: "", phone: "" });
+      details.push(saved?.[i] ?? { name: "", age: "", gender: "", phone: "" });
     }
     return details;
   };
@@ -127,6 +128,7 @@ export function CheckoutPage() {
   const bookingRef = useRef(booking);
   bookingRef.current = booking;
 
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2>(1);
   const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; date?: string; travelers?: string }>({});
 
@@ -251,8 +253,9 @@ export function CheckoutPage() {
 
     const missingTravelerNames = b.travelerDetails.some(t => !t.name?.trim());
     const missingTravelerAges = b.travelerDetails.some(t => !t.age?.trim());
-    if (missingTravelerNames || missingTravelerAges) {
-      errors.travelers = "Please fill in name and age for all travelers";
+    const missingTravelerGenders = b.travelerDetails.some(t => !t.gender?.trim());
+    if (missingTravelerNames || missingTravelerAges || missingTravelerGenders) {
+      errors.travelers = "Please fill in name, age and gender for all travelers";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -503,10 +506,23 @@ export function CheckoutPage() {
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-surface/95 backdrop-blur-xl border-t border-border-light px-4 py-3 shadow-2xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-text-muted">Total Amount</p>
-            <p className="text-lg font-bold text-accent">₹{total.toLocaleString()}</p>
+            <p className="text-[10px] text-text-muted">{checkoutStep === 1 ? 'Number of travelers' : 'Total Amount'}</p>
+            <p className="text-lg font-bold text-accent">{checkoutStep === 1 ? `${booking.travelers} traveler${booking.travelers > 1 ? 's' : ''}` : `₹${total.toLocaleString()}`}</p>
           </div>
-          <Button size="default" className="gap-2 shrink-0 min-w-[130px]" onClick={handlePay}><Wallet className="w-4 h-4" /> Pay Now</Button>
+          {checkoutStep === 1 ? (
+            <Button size="default" className="gap-2 shrink-0 min-w-[130px]" onClick={() => {
+              const b = bookingRef.current;
+              const missingNames = b.travelerDetails.some(t => !t.name?.trim());
+              const missingAges = b.travelerDetails.some(t => !t.age?.trim());
+              const missingGenders = b.travelerDetails.some(t => !t.gender?.trim());
+              const missingDate = !b.startDate;
+              if (missingDate) { setFieldErrors(prev => ({ ...prev, date: "Please select a journey date" })); showToast("⚠️ Please select your journey date", "info"); return; }
+              if (missingNames || missingAges || missingGenders) { setFieldErrors(prev => ({ ...prev, travelers: "Please fill name, age and gender for all travelers" })); showToast("⚠️ Fill name, age and gender for all travelers", "info"); document.getElementById("traveler-form")?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+              setFieldErrors({}); setCheckoutStep(2); window.scrollTo({ top: 0, behavior: "smooth" });
+            }}>Continue →</Button>
+          ) : (
+            <Button size="default" className="gap-2 shrink-0 min-w-[130px]" onClick={handlePay}><Wallet className="w-4 h-4" /> Pay Now</Button>
+          )}
         </div>
       </div>
 
@@ -524,15 +540,31 @@ export function CheckoutPage() {
                 <p className="text-text-secondary text-sm">{tour.name} — {tour.duration}</p>
               </motion.div>
 
-              {/* ===== SECTION 1: WHO'S COMING (FIRST!) ===== */}
-              <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
+              {/* Step Indicator */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${checkoutStep === 1 ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-surface-lighter/50 text-text-muted'}`}>
+                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
+                  Passenger Details
+                  {checkoutStep === 1 && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">You are here</span>}
+                </div>
+                <div className={`h-px flex-1 ${checkoutStep === 2 ? 'bg-accent' : 'bg-border-light'}`} />
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${checkoutStep === 2 ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-surface-lighter/50 text-text-muted'}`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${checkoutStep === 2 ? 'bg-white/20' : 'bg-surface-lighter/70'}`}>2</span>
+                  Payment
+                  {checkoutStep === 2 && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">You are here</span>}
+                </div>
+              </div>
+
+              {/* ===== SECTION 1: PASSENGER DETAILS (STEP 1) ===== */}
+              {checkoutStep === 1 && (
+              <motion.div variants={itemVariants} className="rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-5 space-y-4">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                     <Users className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <h2 className="font-semibold">Who's Coming?</h2>
-                    <p className="text-xs text-text-muted">Enter details of everyone who will travel</p>
+                    <h2 className="font-semibold">👥 Who's Coming?</h2>
+                    <p className="text-xs text-text-muted">Fill details of everyone who will travel</p>
                   </div>
                   {draftSaved && (
                     <span className="ml-auto text-[10px] text-green-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Saved</span>
@@ -576,8 +608,8 @@ export function CheckoutPage() {
                         <span className="text-sm font-medium">{index === 0 ? "You (Main Traveler)" : `Traveler ${index + 1}`}</span>
                         {index === 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">Auto-filled</span>}
                       </div>
-                      <div className="grid sm:grid-cols-3 gap-3">
-                        <div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="sm:col-span-1">
                           <label htmlFor={`traveler-name-${index}`} className="text-[10px] text-text-muted block mb-1">Full Name <span className="text-red-400">*</span></label>
                           <input type="text" id={`traveler-name-${index}`} name={`traveler-name-${index}`} autoComplete={index === 0 ? "name" : "off"}
                             placeholder={index === 0 ? "Your name" : `Traveler ${index + 1} name`}
@@ -602,6 +634,22 @@ export function CheckoutPage() {
                             className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors" />
                         </div>
                         <div>
+                          <label htmlFor={`traveler-gender-${index}`} className="text-[10px] text-text-muted block mb-1">Gender <span className="text-red-400">*</span></label>
+                          <select id={`traveler-gender-${index}`} name={`traveler-gender-${index}`}
+                            value={traveler.gender}
+                            onChange={(e) => {
+                              const updated = [...booking.travelerDetails];
+                              updated[index] = { ...updated[index], gender: e.target.value };
+                              setBooking({ ...booking, travelerDetails: updated });
+                            }}
+                            className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors appearance-none">
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
                           <label htmlFor={`traveler-phone-${index}`} className="text-[10px] text-text-muted block mb-1">Phone <span className="text-text-muted/50">(optional)</span></label>
                           <input type="tel" id={`traveler-phone-${index}`} name={`traveler-phone-${index}`}
                             placeholder={index === 0 ? "9876543210" : ""}
@@ -618,8 +666,41 @@ export function CheckoutPage() {
                   ))}
                 </div>
               </motion.div>
+              )}
 
-              {/* ===== SECTION 2: CONTACT INFO ===== */}
+              {/* ===== STEP 1 → 2 CONTINUE BUTTON ===== */}
+              {checkoutStep === 1 && (
+                <motion.div variants={itemVariants}>
+                  <Button size="lg" className="w-full gap-2 text-base" onClick={() => {
+                    const b = bookingRef.current;
+                    const missingNames = b.travelerDetails.some(t => !t.name?.trim());
+                    const missingAges = b.travelerDetails.some(t => !t.age?.trim());
+                    const missingGenders = b.travelerDetails.some(t => !t.gender?.trim());
+                    const missingDate = !b.startDate;
+                    
+                    if (missingDate) {
+                      setFieldErrors(prev => ({ ...prev, date: "Please select a journey date" }));
+                      showToast("⚠️ Please select your journey date", "info");
+                      return;
+                    }
+                    if (missingNames || missingAges || missingGenders) {
+                      setFieldErrors(prev => ({ ...prev, travelers: "Please fill name, age and gender for all travelers" }));
+                      showToast("⚠️ Fill name, age and gender for all travelers", "info");
+                      document.getElementById("traveler-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      return;
+                    }
+                    setFieldErrors({});
+                    setCheckoutStep(2);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}>
+                    Continue to Contact & Payment →
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* ===== SECTION 2: CONTACT INFO + PAYMENT (STEP 2) ===== */}
+              {checkoutStep === 2 && (
+              <>
               <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
                 <h2 className="font-semibold flex items-center gap-2 text-sm">
                   <Mail className="w-4 h-4 text-accent" /> Contact Information
@@ -703,6 +784,16 @@ export function CheckoutPage() {
                   <Shield className="w-3 h-3 inline mr-0.5" /> Powered by Razorpay · 3D Secure
                 </p>
               </motion.div>
+
+              {/* Back to Step 1 */}
+              <motion.div variants={itemVariants} className="text-center">
+                <button onClick={() => { setCheckoutStep(1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="text-sm text-text-muted hover:text-text-primary transition-colors underline underline-offset-4 decoration-border-light">
+                  ← Back to Passenger Details
+                </button>
+              </motion.div>
+              </>
+              )}
             </motion.div>
           </div>
 
