@@ -91,13 +91,13 @@ export function Contact() {
                 {
                   icon: Phone,
                   label: "Phone",
-                  value: "+91 1800-TRAVEL",
+                  value: "+91 98765 43210",
                   desc: "Mon-Fri from 9AM to 6PM IST",
                 },
                 {
                   icon: MapPin,
                   label: "Office",
-                  value: "Mumbai, Maharashtra, India",
+                  value: "Madhapur, Hyderabad, India",
                   desc: "Visit us by appointment",
                 },
               ].map((item) => {

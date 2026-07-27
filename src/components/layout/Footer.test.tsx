@@ -100,8 +100,8 @@ describe("Footer Component", () => {
   it("renders contact information", () => {
     renderFooter();
     expect(screen.getByText("hello@travellog.com")).toBeInTheDocument();
-    expect(screen.getByText("+91 1800-TRAVEL")).toBeInTheDocument();
-    expect(screen.getByText("Mumbai, Maharashtra, India")).toBeInTheDocument();
+    expect(screen.getByText("+91 98765 43210")).toBeInTheDocument();
+    expect(screen.getByText("Madhapur, Hyderabad, India")).toBeInTheDocument();
   });
 
   it("renders the copyright notice with the current year", () => {
