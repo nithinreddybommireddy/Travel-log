@@ -9,6 +9,7 @@ export interface TravelerInfo {
   age: string;
   gender: string;
   phone: string;
+  location: string;
 }
 
 export interface Booking {

@@ -25,6 +25,7 @@ interface TravelerInfo {
   age: string;
   gender: string;
   phone: string;
+  location: string;
 }
 
 interface BookingForm {
@@ -110,7 +111,7 @@ function clearDraft() {
 function makeTravelerDetails(count: number, saved?: TravelerInfo[]): TravelerInfo[] {
   const result: TravelerInfo[] = [];
   for (let i = 0; i < count; i++) {
-    result.push(saved?.[i] ?? { name: "", age: "", gender: "", phone: "" });
+    result.push(saved?.[i] ?? { name: "", age: "", gender: "", phone: "", location: "" });
   }
   return result;
 }
@@ -282,6 +283,9 @@ export function CheckoutPage() {
       errs["customerEmail"] = "Email is required";
     } else if (!emailRegex.test(b.customerEmail.trim())) {
       errs["customerEmail"] = "Please enter a valid email address";
+    }
+    if (!b.customerPhone?.trim() || b.customerPhone.trim().length < 10) {
+      errs["customerPhone"] = "Valid 10-digit phone is required";
     }
 
     if (Object.keys(errs).length > 0) {
@@ -597,13 +601,14 @@ export function CheckoutPage() {
             <Button
               size="default" className="gap-2 shrink-0 min-w-[130px]"
               onClick={() => {
-                const b = formRef.current;
-                const missingNames = b.travelerDetails.some((t) => !t.name?.trim());
-                const missingAges = b.travelerDetails.some((t) => !t.age?.trim());
-                const missingGenders = b.travelerDetails.some((t) => !t.gender?.trim());
-                if (missingNames || missingAges || missingGenders) {
-                  setErrors({ travelers: "Fill name, age & gender for all travelers" });
-                  showToast("⚠️ Fill name, age & gender for all travelers", "info");
+                const bCheck = formRef.current;
+                const missingNames = bCheck.travelerDetails.some((t) => !t.name?.trim());
+                const missingAges = bCheck.travelerDetails.some((t) => !t.age?.trim());
+                const missingGenders = bCheck.travelerDetails.some((t) => !t.gender?.trim());
+                const missingPhones = bCheck.travelerDetails.some((t) => !t.phone?.trim());
+                if (missingNames || missingAges || missingGenders || missingPhones) {
+                  setErrors({ travelers: "Fill name, age, gender & phone for all travelers" });
+                  showToast("⚠️ Fill name, age, gender & phone for all travelers", "info");
                   return;
                 }
                 setErrors({});
@@ -830,7 +835,7 @@ export function CheckoutPage() {
                             </span>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
                           <div className="sm:col-span-1">
                             <label htmlFor={"traveler-name-" + index} className="text-[10px] text-text-muted block mb-1">
                               Full Name <span className="text-red-400">*</span>
@@ -891,7 +896,7 @@ export function CheckoutPage() {
                           </div>
                           <div>
                             <label htmlFor={"traveler-phone-" + index} className="text-[10px] text-text-muted block mb-1">
-                              Phone <span className="text-text-muted/50">(optional)</span>
+                              Phone <span className="text-red-400">*</span>
                             </label>
                             <input
                               type="tel"
@@ -902,6 +907,24 @@ export function CheckoutPage() {
                               onChange={(e) => {
                                 const updated = [...form.travelerDetails];
                                 updated[index] = { ...updated[index], phone: e.target.value.replace(/\D/g, "").slice(0, 10) };
+                                setForm((prev) => ({ ...prev, travelerDetails: updated }));
+                              }}
+                              className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label htmlFor={"traveler-location-" + index} className="text-[10px] text-text-muted block mb-1">
+                              Location <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              id={"traveler-location-" + index}
+                              name={"traveler-location-" + index}
+                              placeholder={index === 0 ? "City, State" : "City, State"}
+                              value={traveler.location}
+                              onChange={(e) => {
+                                const updated = [...form.travelerDetails];
+                                updated[index] = { ...updated[index], location: e.target.value };
                                 setForm((prev) => ({ ...prev, travelerDetails: updated }));
                               }}
                               className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors"
@@ -926,9 +949,11 @@ export function CheckoutPage() {
                       const missingNames = b.travelerDetails.some((t) => !t.name?.trim());
                       const missingAges = b.travelerDetails.some((t) => !t.age?.trim());
                       const missingGenders = b.travelerDetails.some((t) => !t.gender?.trim());
-                      if (missingNames || missingAges || missingGenders) {
-                        setErrors({ travelers: "Fill name, age & gender for all travelers" });
-                        showToast("⚠️ Fill name, age & gender for all travelers", "info");
+                      const missingPhones = b.travelerDetails.some((t) => !t.phone?.trim());
+                      const missingLocations = b.travelerDetails.some((t) => !t.location?.trim());
+                      if (missingNames || missingAges || missingGenders || missingPhones || missingLocations) {
+                        setErrors({ travelers: "Fill all fields for all travelers" });
+                        showToast("⚠️ Fill all fields for all travelers", "info");
                         return;
                       }
                       setErrors({});
@@ -1002,7 +1027,7 @@ export function CheckoutPage() {
                     </div>
                     <div>
                       <label htmlFor="customerPhone" className="text-xs text-text-muted block mb-1">
-                        Phone <span className="text-text-muted/50">(optional)</span>
+                        Phone <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="tel" id="customerPhone" name="customerPhone" autoComplete="tel"
@@ -1058,16 +1083,18 @@ export function CheckoutPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-border-light bg-surface-lighter/20 opacity-70">
+                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-border-light bg-surface-lighter/20">
                       <Building2 className="w-7 h-7 text-text-muted" />
                       <div className="text-center">
                         <p className="font-semibold text-xs">Net Banking</p>
+                        <p className="text-[10px] text-text-muted">All banks supported</p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-border-light bg-surface-lighter/20 opacity-70">
+                    <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-border-light bg-surface-lighter/20">
                       <Wallet className="w-7 h-7 text-text-muted" />
                       <div className="text-center">
                         <p className="font-semibold text-xs">Wallet</p>
+                        <p className="text-[10px] text-text-muted">Paytm, Amazon Pay</p>
                       </div>
                     </div>
                   </div>
