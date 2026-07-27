@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
-import { useAuth } from "@/features/auth/services/auth-context";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
 import { tours, type Tour } from "@/features/tours/data/tours";
 

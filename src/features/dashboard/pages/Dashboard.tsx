@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { tours } from "@/features/tours/data/tours";
-import { useAuth } from "@/features/auth/services/auth-context";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { useSavedTours, useMoodBoards, useTripPlans } from "@/services/storageService";
 import { getEmailHistory } from "@/services/emailService";
 

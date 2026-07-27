@@ -5,7 +5,7 @@ import { MapPin, Clock, Users, Star, Search, Heart, Flame, Sparkles, Crown, Arro
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { tours, categories, priceTiers, getPriceTierInfo, type TourCategory, type PriceTier } from "@/features/tours/data/tours";
-import { useAuth } from "@/features/auth/services/auth-context";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { useSavedTours } from "@/services/storageService";
 import { useToast } from "@/hooks/use-toast";
 

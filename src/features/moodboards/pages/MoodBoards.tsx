@@ -5,7 +5,7 @@ import { Plus, Layout, Lock, Globe, X, Loader2, ArrowLeft, Trash2 } from "lucide
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/features/auth/services/auth-context";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { useMoodBoards } from "@/services/storageService";
 
 const boardColors = [

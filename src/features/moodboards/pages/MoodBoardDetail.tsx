@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tours } from "@/features/tours/data/tours";
-import { useAuth } from "@/features/auth/services/auth-context";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { useMoodBoards } from "@/services/storageService";
 
 export function MoodBoardDetailPage() {

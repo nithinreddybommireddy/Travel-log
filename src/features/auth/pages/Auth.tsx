@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Compass, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/features/auth/services/auth-context";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export function AuthPage() {
   const navigate = useNavigate();
