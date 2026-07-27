@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Shield, Smartphone, Wallet,
+  ArrowLeft, Shield, Smartphone,
   CheckCircle2, BadgePercent, Users, Ticket, Loader2,
   Mail, MessageSquare, MessageCircle, CalendarDays,
   ChevronLeft, ChevronRight,
@@ -600,11 +600,7 @@ export function CheckoutPage() {
             >
               Continue →
             </Button>
-          ) : (
-            <Button size="default" className="gap-2 shrink-0 min-w-[130px]" onClick={handlePay}>
-              <Wallet className="w-4 h-4" /> Pay Now
-            </Button>
-          )}
+          ) : null}
         </div>
       </div>
     );
@@ -1198,17 +1194,7 @@ export function CheckoutPage() {
                   )}
                 </div>
 
-                {/* Desktop Pay Now */}
-                {step === 3 && (
-                  <div className="px-5 pb-5 hidden lg:block">
-                    <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
-                      <CheckCircle2 className="w-5 h-5" /> Confirm Booking — ₹{total.toLocaleString()}
-                    </Button>
-                    <p className="text-[10px] text-text-muted text-center mt-2">
-                      <Smartphone className="w-3 h-3 inline mr-0.5" /> Pay via UPI: {UPI_ID}
-                    </p>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
