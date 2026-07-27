@@ -14,6 +14,7 @@ import { offerCodes, validateOfferCode } from "@/features/booking/data/offers";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { sendBookingConfirmation } from "@/services/emailService";
+import { sendBookingConfirmationEmail } from "@/services/emailjsService";
 import {
   sendWhatsAppConfirmation,
   sendSMSConfirmation,
@@ -349,6 +350,52 @@ export function CheckoutPage() {
     setPage("confirmed");
     window.scrollTo({ top: 0, behavior: "smooth" });
     showToast("Booking confirmed! 🎉", "success");
+
+    // Auto-send email confirmation in background
+    if (b.customerEmail?.trim()) {
+      const travelerSummary = b.travelerDetails
+        .map(
+          (t, i) =>
+            `${i + 1}. ${t.name} (${t.age}, ${t.gender}) — ${t.location} — 📞${t.phone}`
+        )
+        .join("\n");
+      sendBookingConfirmationEmail({
+        to_name: b.customerName || "Traveler",
+        to_email: b.customerEmail,
+        tour_name: tour.name,
+        tour_location: tour.location,
+        start_date: b.startDate,
+        travelers: b.travelers,
+        total_paid: "₹" + total.toLocaleString(),
+        discount: discount > 0 ? "-₹" + discount.toLocaleString() : "₹0",
+        coupon: appliedOffer?.code || "None",
+        booking_id: bookingId,
+        status: "Pending",
+        traveler_details: travelerSummary,
+        from_name: "Travel Log",
+        reply_to: b.customerEmail,
+      }).then((result) => {
+        if (result.success) {
+          console.log("✅ Booking confirmation email sent");
+        } else {
+          // Fallback to mailto
+          sendBookingConfirmation(
+            {
+              id: bookingId,
+              tourName: tour.name,
+              location: tour.location,
+              startDate: b.startDate,
+              travelers: b.travelers,
+              totalPaid: total,
+              discount: discount,
+              coupon: appliedOffer?.code || null,
+              status: "confirmed",
+            },
+            b.customerEmail
+          );
+        }
+      });
+    }
   };
 
   // ===== CONFIRMED VIEW =====
