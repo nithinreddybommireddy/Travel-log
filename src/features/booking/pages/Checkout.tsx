@@ -273,7 +273,15 @@ export function CheckoutPage() {
       const existing = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
       existing.unshift(newBooking);
       localStorage.setItem("travellog_bookings", JSON.stringify(existing.slice(0, 50)));
-    } catch { /* ignore localStorage errors */ }
+      // Verify the save by reading it back
+      const verify = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
+      const saved = verify.find((b: any) => b.id === bookingId);
+      if (!saved) throw new Error("Save verification failed");
+    } catch (e) {
+      showToast("Failed to save booking. Please try again.", "error");
+      setStep("form");
+      return;
+    }
 
     setStep("processing");
     window.scrollTo({ top: 0, behavior: "smooth" });
