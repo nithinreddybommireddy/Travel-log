@@ -1,10 +1,11 @@
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Shield, CreditCard, Smartphone, Building2,
   CheckCircle2, BadgePercent, Users, Ticket,
   Loader2, ChevronRight, Wallet, Sparkles, Mail,
+  Copy, Check, QrCode, ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,48 @@ export function CheckoutPage() {
   const bookingFee = 199;
   const discount = appliedOffer?.discount || 0;
   const total = basePrice + gst + bookingFee - discount;
+
+  // UPI state - moved after total declaration
+  const [upiId, setUpiId] = useState("travellog@upi");
+  const [selectedUpiApp, setSelectedUpiApp] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // UPI payment URL for QR code
+  const upiPaymentUrl = useMemo(() => {
+    const cleanUpi = upiId.replace(/\s/g, "");
+    if (!cleanUpi.includes("@")) return "";
+    const params = new URLSearchParams({
+      pa: cleanUpi,
+      pn: "TravelLog",
+      am: total.toString(),
+      cu: "INR",
+      tn: `Booking for ${tour.name}`.slice(0, 50),
+    });
+    return `upi://pay?${params.toString()}`;
+  }, [upiId, total, tour?.name]);
+
+  const qrCodeUrl = useMemo(() => {
+    if (!upiPaymentUrl) return "";
+    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiPaymentUrl)}&bgcolor=ffffff&color=1a1a2e&margin=10`;
+  }, [upiPaymentUrl]);
+
+  const handleCopyUpi = () => {
+    const cleanUpi = upiId.replace(/\s/g, "");
+    if (cleanUpi) {
+      navigator.clipboard.writeText(cleanUpi).then(() => {
+        setCopied(true);
+        showToast("UPI ID copied!", "success");
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
+
+  const handleOpenUpiApp = (appName: string) => {
+    setSelectedUpiApp(appName);
+    if (upiPaymentUrl) {
+      window.open(upiPaymentUrl, "_blank");
+    }
+  };
 
   const formatCard = (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 16);
@@ -530,22 +573,158 @@ export function CheckoutPage() {
                   {paymentMethod === "upi" && (
                     <motion.div variants={itemVariants}
                       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                      className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Smartphone className="w-5 h-5 text-accent" />
-                        <span className="font-semibold text-sm">UPI Payment</span>
+                      className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-5"
+                    >
+                      {/* Header */}
+                      <div className="flex items-center gap-3 mb-1">
+                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                          <QrCode className="w-5 h-5 text-accent" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-sm">Scan & Pay with UPI</span>
+                          <p className="text-[11px] text-text-muted">Scan the QR code or enter your UPI app</p>
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">UPI ID / VPA</label>
-                        <input type="text" placeholder="example@upi" 
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+
+                      {/* QR Code Display */}
+                      <div className="flex flex-col sm:flex-row items-center gap-5">
+                        <div className="relative shrink-0">
+                          {qrCodeUrl ? (
+                            <div className="bg-white rounded-2xl p-3 shadow-lg shadow-accent/5 border border-border-light">
+                              <img
+                                src={qrCodeUrl}
+                                alt="UPI QR Code"
+                                className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.style.display = "none";
+                                  const fallback = target.nextElementSibling;
+                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
+                                }}
+                              />
+                              <div className="hidden absolute inset-0 items-center justify-center bg-white/95 rounded-2xl flex-col p-4 text-center">
+                                <QrCode className="w-8 h-8 text-text-muted mb-2" />
+                                <p className="text-xs text-text-muted">QR unavailable</p>
+                              </div>
+                              <div className="mt-2 text-center">
+                                <span className="text-[10px] font-semibold text-gray-800">₹{total.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-2xl bg-surface-lighter/40 border-2 border-dashed border-border-light flex items-center justify-center">
+                              <div className="text-center">
+                                <QrCode className="w-10 h-10 text-text-muted/50 mx-auto mb-2" />
+                                <p className="text-[11px] text-text-muted">Enter UPI ID</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-3 w-full">
+                          {/* UPI ID Input */}
+                          <div>
+                            <label className="text-xs text-text-muted block mb-1.5">UPI ID / VPA</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="yourname@upi"
+                                value={upiId}
+                                onChange={(e) => setUpiId(e.target.value.toLowerCase())}
+                                className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors"
+                              />
+                              <button
+                                onClick={handleCopyUpi}
+                                className="w-10 h-10 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-all shrink-0"
+                                title="Copy UPI ID"
+                              >
+                                {copied ? (
+                                  <Check className="w-4 h-4 text-green-400" />
+                                ) : (
+                                  <Copy className="w-4 h-4 text-text-muted" />
+                                )}
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-text-muted mt-1">
+                              Amount: <span className="text-accent font-medium">₹{total.toLocaleString()}</span> · Change the UPI ID to your preferred payment address
+                            </p>
+                          </div>
+
+                          {/* Pay with UPI Apps */}
+                          <div>
+                            <label className="text-xs text-text-muted block mb-1.5">Pay with UPI App</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                {
+                                  name: "Google Pay",
+                                  icon: "📱",
+                                  color: "#4285F4",
+                                  description: "Scan with GPay",
+                                },
+                                {
+                                  name: "PhonePe",
+                                  icon: "📲",
+                                  color: "#5F259F",
+                                  description: "Scan with PhonePe",
+                                },
+                                {
+                                  name: "Paytm",
+                                  icon: "🟡",
+                                  color: "#00BAF2",
+                                  description: "Scan with Paytm",
+                                },
+                                {
+                                  name: "BHIM",
+                                  icon: "🇮🇳",
+                                  color: "#1E9A4B",
+                                  description: "Scan with BHIM",
+                                },
+                              ].map((app) => {
+                                const active = selectedUpiApp === app.name;
+                                return (
+                                  <button
+                                    key={app.name}
+                                    onClick={() => handleOpenUpiApp(app.name)}
+                                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                                      active
+                                        ? "border-accent bg-accent/5"
+                                        : "border-border-light bg-surface-lighter/30 hover:border-accent/30 hover:bg-accent/[0.02]"
+                                    }`}
+                                  >
+                                    <span className="text-lg shrink-0">{app.icon}</span>
+                                    <div className="text-left">
+                                      <div className="text-xs font-medium">{app.name}</div>
+                                      <div className="text-[10px] text-text-muted">{app.description}</div>
+                                    </div>
+                                    <ExternalLink className={`w-3 h-3 ml-auto shrink-0 ${
+                                      active ? "text-accent" : "text-text-muted/40"
+                                    }`} />
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {["Google Pay", "PhonePe", "Paytm", "BHIM"].map((app) => (
-                          <button key={app}
-                            className="text-[11px] px-3 py-1.5 rounded-full bg-surface-lighter/50 border border-border-light hover:border-accent/30 transition-colors">
-                            {app}
-                          </button>
+
+                      {/* UPI Payment Instructions */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { step: "1", title: "Scan QR", desc: "Open your UPI app & scan" },
+                          { step: "2", title: "Verify Amount", desc: `₹${total.toLocaleString()}` },
+                          { step: "3", title: "Pay", desc: "Enter UPI PIN to pay" },
+                        ].map((item) => (
+                          <div
+                            key={item.step}
+                            className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-lighter/30 border border-border-light"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {item.step}
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-medium">{item.title}</div>
+                              <div className="text-[10px] text-text-muted">{item.desc}</div>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </motion.div>
