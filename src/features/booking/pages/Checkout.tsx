@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, Shield, CreditCard, Smartphone, Building2,
   CheckCircle2, BadgePercent, Users, Ticket,
-  Loader2, Wallet, Mail,
+  Loader2, Wallet, Mail, MessageSquare, MessageCircle,
   Copy, Check, QrCode, ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,12 @@ import { offerCodes, validateOfferCode } from "@/features/booking/data/offers";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { sendBookingConfirmation } from "@/services/emailService";
+import {
+  sendWhatsAppConfirmation,
+  sendSMSConfirmation,
+  sendWhatsAppToAllTravelers,
+  sendSMSToAllTravelers,
+} from "@/services/notificationService";
 
 type PaymentMethod = "card" | "upi" | "netbanking";
 
@@ -461,6 +467,141 @@ export function CheckoutPage() {
                 <span className="font-medium">{value}</span>
               </div>
             ))}
+          </div>
+
+          {/* 📱 WhatsApp & SMS Notifications */}
+          <div className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border border-green-500/20 rounded-2xl p-5 mb-6 text-left">
+            <div className="flex items-center gap-3 mb-3">
+              <MessageCircle className="w-5 h-5 text-green-400" />
+              <span className="font-semibold text-sm">Send via WhatsApp or SMS</span>
+            </div>
+            <p className="text-xs text-text-secondary mb-3">
+              Send booking confirmation to your phone or all travelers.
+            </p>
+
+            {/* Send to Main Booker's Phone */}
+            {booking.customerPhone ? (
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="tel"
+                  placeholder="Your phone number"
+                  defaultValue={booking.customerPhone}
+                  id="notify-phone"
+                  className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-400/50 transition-colors"
+                  maxLength={10}
+                />
+                <Button
+                  variant="secondary"
+                  className="gap-2 shrink-0 bg-green-500/10 hover:bg-green-500/20 border-green-500/30 text-green-400"
+                  onClick={() => {
+                    const phoneInput = document.getElementById("notify-phone") as HTMLInputElement;
+                    const phone = phoneInput?.value.trim();
+                    if (!phone || phone.length < 10) {
+                      showToast("Please enter a valid 10-digit phone number", "info");
+                      return;
+                    }
+                    const bookingInfo = {
+                      id: Date.now().toString(36),
+                      tourName: tour.name,
+                      location: tour.location,
+                      startDate: booking.startDate,
+                      travelers: booking.travelers,
+                      totalPaid: total,
+                      discount: discount,
+                      coupon: appliedOffer?.code || null,
+                      status: "confirmed",
+                    };
+                    sendWhatsAppConfirmation(bookingInfo, phone);
+                    showToast("WhatsApp opened! 💬", "success");
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="gap-2 shrink-0 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-400"
+                  onClick={() => {
+                    const phoneInput = document.getElementById("notify-phone") as HTMLInputElement;
+                    const phone = phoneInput?.value.trim();
+                    if (!phone || phone.length < 10) {
+                      showToast("Please enter a valid 10-digit phone number", "info");
+                      return;
+                    }
+                    const bookingInfo = {
+                      id: Date.now().toString(36),
+                      tourName: tour.name,
+                      location: tour.location,
+                      startDate: booking.startDate,
+                      travelers: booking.travelers,
+                      totalPaid: total,
+                      discount: discount,
+                      coupon: appliedOffer?.code || null,
+                      status: "confirmed",
+                    };
+                    sendSMSConfirmation(bookingInfo, phone);
+                    showToast("SMS app opened! ✉️", "success");
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  SMS
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted mb-3">Add a phone number in the booking to send WhatsApp/SMS notifications.</p>
+            )}
+
+            {/* Notify All Travelers Button */}
+            {booking.travelerDetails && booking.travelerDetails.some(t => t.phone && t.phone.replace(/[^0-9]/g, "").length >= 10) && (
+              <div className="flex gap-2 pt-2 border-t border-green-500/10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-[11px] text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                  onClick={() => {
+                    const bookingInfo = {
+                      id: Date.now().toString(36),
+                      tourName: tour.name,
+                      location: tour.location,
+                      startDate: booking.startDate,
+                      travelers: booking.travelers,
+                      totalPaid: total,
+                      discount: discount,
+                      coupon: appliedOffer?.code || null,
+                      status: "confirmed",
+                    };
+                    sendWhatsAppToAllTravelers(bookingInfo, booking.travelerDetails);
+                    showToast("WhatsApp opened for all travelers! 💬", "success");
+                  }}
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Notify All via WhatsApp
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-[11px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                  onClick={() => {
+                    const bookingInfo = {
+                      id: Date.now().toString(36),
+                      tourName: tour.name,
+                      location: tour.location,
+                      startDate: booking.startDate,
+                      travelers: booking.travelers,
+                      totalPaid: total,
+                      discount: discount,
+                      coupon: appliedOffer?.code || null,
+                      status: "confirmed",
+                    };
+                    sendSMSToAllTravelers(bookingInfo, booking.travelerDetails);
+                    showToast("SMS opened for all travelers! ✉️", "success");
+                  }}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Notify All via SMS
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Email Confirmation */}
