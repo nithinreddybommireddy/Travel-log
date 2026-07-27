@@ -234,7 +234,24 @@ export function CheckoutPage() {
 
   const handlePay = () => {
     // Use ref to get the absolute latest booking data
-    const b = bookingRef.current;
+    let b = bookingRef.current;
+
+    // DOM FALLBACK: read values directly from input elements
+    // (Handles browser autofill which doesn't trigger React onChange)
+    const nameEl = document.getElementById("customerName") as HTMLInputElement | null;
+    const emailEl = document.getElementById("customerEmail") as HTMLInputElement | null;
+    const dateEl = document.getElementById("startDate") as HTMLInputElement | null;
+
+    if (nameEl && !b.customerName?.trim()) {
+      b = { ...b, customerName: nameEl.value };
+    }
+    if (emailEl && !b.customerEmail?.trim()) {
+      b = { ...b, customerEmail: emailEl.value };
+    }
+    if (dateEl && !b.startDate) {
+      b = { ...b, startDate: dateEl.value };
+    }
+
     console.log("[Checkout] handlePay clicked", { name: b.customerName, email: b.customerEmail, date: b.startDate });
 
     // Validate required fields with specific error messages
@@ -250,6 +267,11 @@ export function CheckoutPage() {
       // Scroll to the form
       document.getElementById("traveler-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
+    }
+
+    // Sync the DOM values back to React state for a consistent save
+    if (b !== bookingRef.current) {
+      setBooking(b as BookingState);
     }
     setFieldErrors({});
     clearDraft();
