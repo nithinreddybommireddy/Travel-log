@@ -659,7 +659,7 @@ export function CheckoutPage() {
                   {/* Travelers Count */}
                   <div id="traveler-form" className="flex items-center gap-4 p-4 rounded-xl bg-surface-lighter/30 border border-border-light">
                     <div className="flex-1">
-                      <label className="text-xs text-text-muted block mb-1">Number of Travelers</label>
+                      <p className="text-xs text-text-muted block mb-1">Number of Travelers</p>
                       <div className="flex items-center gap-3">
                         <button type="button" onClick={() => setBooking({ ...booking, travelers: Math.max(1, booking.travelers - 1) })}
                           className="w-10 h-10 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg" aria-label="Decrease">−</button>
