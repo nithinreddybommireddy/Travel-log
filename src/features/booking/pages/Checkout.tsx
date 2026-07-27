@@ -61,6 +61,12 @@ export function CheckoutPage() {
 
   const tour = tours.find((t) => t.id === id);
 
+  // Today's date in YYYY-MM-DD format (for min date on date picker)
+  const todayDate = useMemo(() => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }, []);
+
   // Pre-fill from Quick Rebook params
   const rebookTravelers = Math.max(1, parseInt(searchParams.get("travelers") || "1", 10));
 
@@ -491,10 +497,11 @@ export function CheckoutPage() {
                   </div>
                   <div>
                     <label className="text-xs text-text-muted block mb-1">Start Date <span className="text-red-400">*</span></label>
-                    <input type="date" value={booking.startDate}
+                    <input type="date" value={booking.startDate} min={todayDate}
                       onChange={(e) => { setBooking({ ...booking, startDate: e.target.value }); if (fieldErrors.date) setFieldErrors((prev) => ({ ...prev, date: undefined })); }}
                       className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.date ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
                     {fieldErrors.date && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.date}</p>}
+                    <p className="text-[10px] text-text-muted mt-1">Select a future date for your trip</p>
                   </div>
                 </div>
                 <div>
