@@ -4,6 +4,12 @@ export interface User {
   email: string;
 }
 
+export interface TravelerInfo {
+  name: string;
+  age: string;
+  phone: string;
+}
+
 export interface Booking {
   id: string;
   tourId: string;
@@ -18,6 +24,7 @@ export interface Booking {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  travelerDetails?: TravelerInfo[];
 }
 
 export type Theme = "dark" | "light";

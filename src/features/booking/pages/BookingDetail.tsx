@@ -11,6 +11,12 @@ import { TourMap } from "@/components/ui/tour-map";
 import { tours } from "@/features/tours/data/tours";
 import { downloadItinerary } from "@/utils/downloadItinerary";
 
+interface TravelerInfo {
+  name: string;
+  age: string;
+  phone: string;
+}
+
 interface Booking {
   id: string;
   tourId: string;
@@ -25,6 +31,7 @@ interface Booking {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  travelerDetails?: TravelerInfo[];
 }
 
 function getBookingById(bookingId: string): Booking | null {
@@ -512,6 +519,18 @@ export function BookingDetailPage() {
                     <span className="text-text-muted">Travelers</span>
                     <span className="font-medium">{booking.travelers}</span>
                   </div>
+                  {booking.travelerDetails && booking.travelerDetails.length > 0 && (
+                    <div className="pt-2 border-t border-border-light">
+                      <div className="text-[10px] text-text-muted mb-2 font-medium uppercase tracking-wider">Traveler Details</div>
+                      {booking.travelerDetails.map((t, i) => (
+                        <div key={i} className="flex items-center gap-2 py-1.5 text-sm">
+                          <Users className="w-3 h-3 text-accent shrink-0" />
+                          <span className="text-text-secondary">{t.name || `Traveler ${i + 1}`}</span>
+                          {t.age && <span className="text-text-muted text-xs">· {t.age} yrs</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-text-muted">Booked on</span>
                     <span className="font-medium">{bookingDate}</span>

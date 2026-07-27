@@ -11,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import { tours } from "@/features/tours/data/tours";
 
 
+interface TravelerInfo {
+  name: string;
+  age: string;
+  phone: string;
+}
+
 interface Booking {
   id: string;
   tourId: string;
@@ -25,6 +31,7 @@ interface Booking {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  travelerDetails?: TravelerInfo[];
 }
 
 function getBookings(): Booking[] {
@@ -315,6 +322,15 @@ export function MyBookingsPage() {
                           </span>
                         )}
                       </div>
+                      {booking.travelerDetails && booking.travelerDetails.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {booking.travelerDetails.map((t, i) => (
+                            <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-lighter/40 border border-border-light text-text-muted">
+                              {t.name || `T${i + 1}`}{t.age ? ` (${t.age})` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </Link>
 
                     {/* Actions */}

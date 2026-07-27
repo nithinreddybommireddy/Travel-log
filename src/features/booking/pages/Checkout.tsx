@@ -17,6 +17,12 @@ import { sendBookingConfirmation } from "@/services/emailService";
 
 type PaymentMethod = "card" | "upi" | "netbanking";
 
+interface TravelerInfo {
+  name: string;
+  age: string;
+  phone: string;
+}
+
 interface BookingState {
   travelers: number;
   startDate: string;
@@ -24,6 +30,7 @@ interface BookingState {
   customerEmail: string;
   customerPhone: string;
   specialRequests: string;
+  travelerDetails: TravelerInfo[];
 }
 
 const DRAFT_KEY = "travellog_checkout_draft";
@@ -75,15 +82,37 @@ export function CheckoutPage() {
   // Load saved draft on mount
   const savedDraft = useMemo(() => (id ? loadDraft(id) : null), [id]);
 
+  const getInitialTravelerDetails = (count: number, saved?: TravelerInfo[]): TravelerInfo[] => {
+    const details: TravelerInfo[] = [];
+    for (let i = 0; i < count; i++) {
+      details.push(saved?.[i] ?? { name: "", age: "", phone: "" });
+    }
+    return details;
+  };
+
   // Booking form state — pre-fill Name & Email from logged-in user's profile
-  const [booking, setBooking] = useState<BookingState>(() => ({
-    travelers: savedDraft?.travelers ?? Math.min(rebookTravelers, tour?.maxPeople || 30),
-    startDate: savedDraft?.startDate ?? "",
-    customerName: savedDraft?.customerName ?? user?.name ?? "",
-    customerEmail: savedDraft?.customerEmail ?? user?.email ?? "",
-    customerPhone: savedDraft?.customerPhone ?? "",
-    specialRequests: savedDraft?.specialRequests ?? "",
-  }));
+  const [booking, setBooking] = useState<BookingState>(() => {
+    const initialTravelers = savedDraft?.travelers ?? Math.min(rebookTravelers, tour?.maxPeople || 30);
+    return {
+      travelers: initialTravelers,
+      startDate: savedDraft?.startDate ?? "",
+      customerName: savedDraft?.customerName ?? user?.name ?? "",
+      customerEmail: savedDraft?.customerEmail ?? user?.email ?? "",
+      customerPhone: savedDraft?.customerPhone ?? "",
+      specialRequests: savedDraft?.specialRequests ?? "",
+      travelerDetails: getInitialTravelerDetails(initialTravelers, savedDraft?.travelerDetails),
+    };
+  });
+
+  // Sync travelerDetails array when travelers count changes
+  useEffect(() => {
+    if (booking.travelers !== booking.travelerDetails.length) {
+      setBooking(prev => ({
+        ...prev,
+        travelerDetails: getInitialTravelerDetails(prev.travelers, prev.travelerDetails),
+      }));
+    }
+  }, [booking.travelers]);
 
   // Ref to always have the latest booking data (avoids stale closures)
   const bookingRef = useRef(booking);
@@ -93,7 +122,7 @@ export function CheckoutPage() {
   const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
 
   // Field validation errors
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; date?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; date?: string; travelers?: string }>({});
 
   // Auto-save draft on changes (debounced)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -252,13 +281,36 @@ export function CheckoutPage() {
       b = { ...b, startDate: dateEl.value };
     }
 
-    console.log("[Checkout] handlePay clicked", { name: b.customerName, email: b.customerEmail, date: b.startDate });
+    // DOM fallback for traveler details too
+    for (let i = 0; i < b.travelerDetails.length; i++) {
+      const tNameEl = document.getElementById(`traveler-name-${i}`) as HTMLInputElement | null;
+      const tAgeEl = document.getElementById(`traveler-age-${i}`) as HTMLInputElement | null;
+      if (tNameEl && !b.travelerDetails[i].name?.trim()) {
+        const updated = [...b.travelerDetails];
+        updated[i] = { ...updated[i], name: tNameEl.value };
+        b = { ...b, travelerDetails: updated };
+      }
+      if (tAgeEl && !b.travelerDetails[i].age?.trim()) {
+        const updated = [...b.travelerDetails];
+        updated[i] = { ...updated[i], age: tAgeEl.value };
+        b = { ...b, travelerDetails: updated };
+      }
+    }
 
-    // Validate required fields with specific error messages
-    const errors: { name?: string; email?: string; date?: string } = {};
+    console.log("[Checkout] handlePay clicked", { name: b.customerName, email: b.customerEmail, date: b.startDate, travelerCount: b.travelerDetails.length });
+
+    // Validate required fields
+    const errors: { name?: string; email?: string; date?: string; travelers?: string } = {};
     if (!b.customerName?.trim()) errors.name = "Name is required";
     if (!b.customerEmail?.trim()) errors.email = "Email is required";
     if (!b.startDate) errors.date = "Start date is required";
+
+    // Validate each traveler's name and age
+    const missingTravelerNames = b.travelerDetails.some(t => !t.name?.trim());
+    const missingTravelerAges = b.travelerDetails.some(t => !t.age?.trim());
+    if (missingTravelerNames || missingTravelerAges) {
+      errors.travelers = "Please fill in name and age for all travelers";
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -292,6 +344,7 @@ export function CheckoutPage() {
       customerName: b.customerName,
       customerEmail: b.customerEmail,
       customerPhone: b.customerPhone,
+      travelerDetails: b.travelerDetails,
     };
     console.log("[Checkout] newBooking object:", newBooking);
 
@@ -588,6 +641,62 @@ export function CheckoutPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Traveler Details - Individual fields for each traveler */}
+                <div className="border-t border-border-light pt-4 mt-2">
+                  <h3 className="font-semibold text-xs uppercase tracking-wider text-text-muted mb-3 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-accent" />
+                    Who's Coming? <span className="text-text-muted/50 normal-case font-normal">({booking.travelers} traveler{booking.travelers > 1 ? "s" : ""})</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {booking.travelerDetails.map((traveler, index) => (
+                      <div key={index} className="p-3 rounded-xl bg-surface-lighter/40 border border-border-light">
+                        <div className="text-[11px] font-medium text-accent mb-2 flex items-center gap-1.5">
+                          <Users className="w-3 h-3" /> Traveler {index + 1}
+                        </div>
+                        <div className="grid sm:grid-cols-3 gap-3">
+                          <div>
+                            <label htmlFor={`traveler-name-${index}`} className="text-[10px] text-text-muted block mb-1">Full Name <span className="text-red-400">*</span></label>
+                            <input type="text" id={`traveler-name-${index}`} name={`traveler-name-${index}`} autoComplete={index === 0 ? "name" : "off"}
+                              placeholder={index === 0 ? "Your name" : `Traveler ${index + 1} name`}
+                              value={traveler.name}
+                              onChange={(e) => {
+                                const updated = [...booking.travelerDetails];
+                                updated[index] = { ...updated[index], name: e.target.value };
+                                setBooking({ ...booking, travelerDetails: updated });
+                              }}
+                              className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors" />
+                          </div>
+                          <div>
+                            <label htmlFor={`traveler-age-${index}`} className="text-[10px] text-text-muted block mb-1">Age <span className="text-red-400">*</span></label>
+                            <input type="number" id={`traveler-age-${index}`} name={`traveler-age-${index}`}
+                              placeholder="25" min="1" max="120"
+                              value={traveler.age}
+                              onChange={(e) => {
+                                const updated = [...booking.travelerDetails];
+                                updated[index] = { ...updated[index], age: e.target.value.slice(0, 3) };
+                                setBooking({ ...booking, travelerDetails: updated });
+                              }}
+                              className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors" />
+                          </div>
+                          <div>
+                            <label htmlFor={`traveler-phone-${index}`} className="text-[10px] text-text-muted block mb-1">Phone <span className="text-text-muted/50">(optional)</span></label>
+                            <input type="tel" id={`traveler-phone-${index}`} name={`traveler-phone-${index}`}
+                              placeholder={index === 0 ? "9876543210" : ""}
+                              value={traveler.phone}
+                              onChange={(e) => {
+                                const updated = [...booking.travelerDetails];
+                                updated[index] = { ...updated[index], phone: e.target.value.replace(/\D/g, "").slice(0, 10) };
+                                setBooking({ ...booking, travelerDetails: updated });
+                              }}
+                              className="w-full bg-surface-lighter/40 border border-border-light rounded-lg px-3 py-2 text-xs outline-none focus:border-accent/50 transition-colors" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <label htmlFor="specialRequests" className="text-xs text-text-muted block mb-1">Special Requests <span className="text-text-muted/50">(optional)</span></label>
                   <textarea id="specialRequests" name="specialRequests" placeholder="Any dietary requirements, room preferences, etc." value={booking.specialRequests}
