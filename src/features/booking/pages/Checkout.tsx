@@ -147,7 +147,17 @@ export function CheckoutPage() {
         coupon: appliedOffer?.code || null,
         bookedAt: Date.now(),
         status: "confirmed",
+        customerName: booking.customerName,
+        customerEmail: booking.customerEmail,
+        customerPhone: booking.customerPhone,
       });
+      // Also sync to the Booking type used across the app
+      try {
+        const existing = JSON.parse(localStorage.getItem("travellog_bookings") || "[]");
+        if (!existing.find((b: any) => b.id === bookings[0].id)) {
+          localStorage.setItem("travellog_bookings", JSON.stringify(bookings.slice(0, 50)));
+        }
+      } catch { /* ignore */ }
       localStorage.setItem("travellog_bookings", JSON.stringify(bookings.slice(0, 50)));
       showToast("Booking confirmed! 🎉", "success");
     }, 2500);

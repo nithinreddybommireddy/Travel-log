@@ -23,6 +23,7 @@ const navLinks = [
 
 const dashboardLinks = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "My Bookings", href: "/my-bookings", icon: LayoutDashboard },
   { label: "Trip Photos", href: "/trip-photos", icon: Camera },
   { label: "Mood Boards", href: "/mood-boards", icon: Layout },
   { label: "Compare", href: "/compare", icon: BarChart3 },

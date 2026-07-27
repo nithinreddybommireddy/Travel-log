@@ -15,6 +15,9 @@ export interface Booking {
   coupon: string | null;
   bookedAt: number;
   status: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
 }
 
 export type Theme = "dark" | "light";
