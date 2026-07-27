@@ -60,6 +60,9 @@ export function CheckoutPage() {
   const [cardName, setCardName] = useState("");
   const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
 
+  // Field validation errors
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; date?: string }>({});
+
   if (!tour) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
@@ -166,11 +169,21 @@ export function CheckoutPage() {
   };
 
   const handlePay = () => {
-    // Validate required fields
-    if (!booking.customerName || !booking.customerEmail || !booking.startDate) {
-      showToast("Please fill in all required fields first", "info");
+    // Validate required fields with specific error messages
+    const errors: { name?: string; email?: string; date?: string } = {};
+    if (!booking.customerName?.trim()) errors.name = "Name is required";
+    if (!booking.customerEmail?.trim()) errors.email = "Email is required";
+    if (!booking.startDate) errors.date = "Start date is required";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const missing = Object.values(errors).join(" · ");
+      showToast(`⚠️ ${missing}`, "info");
+      // Scroll to the form
+      document.getElementById("traveler-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    setFieldErrors({});
     setStep("processing");
     window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -385,21 +398,23 @@ export function CheckoutPage() {
                 <h2 className="font-semibold flex items-center gap-2">
                   <Users className="w-4 h-4 text-accent" /> Traveler Details
                 </h2>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div id="traveler-form" className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="text-xs text-text-muted block mb-1">Full Name *</label>
+                    <label className="text-xs text-text-muted block mb-1">Full Name <span className="text-red-400">*</span></label>
                     <input type="text" placeholder="Enter your name" value={booking.customerName}
-                      onChange={(e) => setBooking({ ...booking, customerName: e.target.value })}
-                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                      onChange={(e) => { setBooking({ ...booking, customerName: e.target.value }); if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined })); }}
+                      className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.name ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
+                    {fieldErrors.name && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.name}</p>}
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Email *</label>
+                    <label className="text-xs text-text-muted block mb-1">Email <span className="text-red-400">*</span></label>
                     <input type="email" placeholder="your@email.com" value={booking.customerEmail}
-                      onChange={(e) => setBooking({ ...booking, customerEmail: e.target.value })}
-                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                      onChange={(e) => { setBooking({ ...booking, customerEmail: e.target.value }); if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined })); }}
+                      className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.email ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
+                    {fieldErrors.email && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.email}</p>}
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Phone</label>
+                    <label className="text-xs text-text-muted block mb-1">Phone <span className="text-text-muted/50">(optional)</span></label>
                     <input type="tel" placeholder="9876543210" value={booking.customerPhone}
                       onChange={(e) => setBooking({ ...booking, customerPhone: formatPhone(e.target.value) })}
                       className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
@@ -407,7 +422,7 @@ export function CheckoutPage() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Number of Travelers *</label>
+                    <label className="text-xs text-text-muted block mb-1">Travelers</label>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setBooking({ ...booking, travelers: Math.max(1, booking.travelers - 1) })}
                         className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">−</button>
@@ -417,14 +432,15 @@ export function CheckoutPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Start Date *</label>
+                    <label className="text-xs text-text-muted block mb-1">Start Date <span className="text-red-400">*</span></label>
                     <input type="date" value={booking.startDate}
-                      onChange={(e) => setBooking({ ...booking, startDate: e.target.value })}
-                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                      onChange={(e) => { setBooking({ ...booking, startDate: e.target.value }); if (fieldErrors.date) setFieldErrors((prev) => ({ ...prev, date: undefined })); }}
+                      className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.date ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
+                    {fieldErrors.date && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.date}</p>}
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-text-muted block mb-1">Special Requests (optional)</label>
+                  <label className="text-xs text-text-muted block mb-1">Special Requests <span className="text-text-muted/50">(optional)</span></label>
                   <textarea placeholder="Any dietary requirements, room preferences, etc." value={booking.specialRequests}
                     onChange={(e) => setBooking({ ...booking, specialRequests: e.target.value })}
                     rows={2}
@@ -696,7 +712,7 @@ export function CheckoutPage() {
                 {/* Coupon Code Section (in sidebar, below fare) */}
                 <div className="border-t border-border-light px-5 py-4">
                   <h3 className="font-semibold text-xs uppercase tracking-wider text-text-muted mb-3 flex items-center gap-1.5">
-                    <BadgePercent className="w-3.5 h-3.5 text-accent" /> Apply Coupon Code
+                    <BadgePercent className="w-3.5 h-3.5 text-accent" /> Apply Coupon Code <span className="text-text-muted/50 normal-case font-normal">(optional)</span>
                   </h3>
 
                   {appliedOffer ? (
