@@ -398,11 +398,14 @@ export function CheckoutPage() {
               We'll send your booking details directly to your inbox.
             </p>
             <div className="flex gap-2">
+              <label htmlFor="confirm-email" className="sr-only">Confirmation Email</label>
               <input
                 type="email"
                 placeholder="your@email.com"
                 defaultValue={booking.customerEmail}
                 id="confirm-email"
+                name="confirmEmail"
+                autoComplete="email"
                 className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors"
               />
               <Button
@@ -523,49 +526,49 @@ export function CheckoutPage() {
                 </h2>
                 <div id="traveler-form" className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="text-xs text-text-muted block mb-1">Full Name <span className="text-red-400">*</span></label>
-                    <input type="text" placeholder="Enter your name" value={booking.customerName}
+                    <label htmlFor="customerName" className="text-xs text-text-muted block mb-1">Full Name <span className="text-red-400">*</span></label>
+                    <input type="text" id="customerName" name="customerName" autoComplete="name" placeholder="Enter your name" value={booking.customerName}
                       onChange={(e) => { setBooking({ ...booking, customerName: e.target.value }); if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined })); }}
                       className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.name ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
                     {fieldErrors.name && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.name}</p>}
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Email <span className="text-red-400">*</span></label>
-                    <input type="email" placeholder="your@email.com" value={booking.customerEmail}
+                    <label htmlFor="customerEmail" className="text-xs text-text-muted block mb-1">Email <span className="text-red-400">*</span></label>
+                    <input type="email" id="customerEmail" name="customerEmail" autoComplete="email" placeholder="your@email.com" value={booking.customerEmail}
                       onChange={(e) => { setBooking({ ...booking, customerEmail: e.target.value }); if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined })); }}
                       className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.email ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
                     {fieldErrors.email && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.email}</p>}
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Phone <span className="text-text-muted/50">(optional)</span></label>
-                    <input type="tel" placeholder="9876543210" value={booking.customerPhone}
+                    <label htmlFor="customerPhone" className="text-xs text-text-muted block mb-1">Phone <span className="text-text-muted/50">(optional)</span></label>
+                    <input type="tel" id="customerPhone" name="customerPhone" autoComplete="tel" placeholder="9876543210" value={booking.customerPhone}
                       onChange={(e) => setBooking({ ...booking, customerPhone: formatPhone(e.target.value) })}
                       className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Travelers</label>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => setBooking({ ...booking, travelers: Math.max(1, booking.travelers - 1) })}
-                        className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">−</button>
-                      <span className="font-semibold text-lg w-8 text-center">{booking.travelers}</span>
-                      <button onClick={() => setBooking({ ...booking, travelers: Math.min(tour.maxPeople, booking.travelers + 1) })}
-                        className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">+</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-text-muted block mb-1">Start Date <span className="text-red-400">*</span></label>
-                    <input type="date" value={booking.startDate} min={todayDate}
+                    <label htmlFor="startDate" className="text-xs text-text-muted block mb-1">Start Date <span className="text-red-400">*</span></label>
+                    <input type="date" id="startDate" name="startDate" autoComplete="travel-date" value={booking.startDate} min={todayDate}
                       onChange={(e) => { setBooking({ ...booking, startDate: e.target.value }); if (fieldErrors.date) setFieldErrors((prev) => ({ ...prev, date: undefined })); }}
                       className={`w-full bg-surface-lighter/40 border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors ${fieldErrors.date ? "border-red-400/70 ring-1 ring-red-400/30" : "border-border-light"}`} />
                     {fieldErrors.date && <p className="text-[10px] text-red-400 mt-1">⚠️ {fieldErrors.date}</p>}
                     <p className="text-[10px] text-text-muted mt-1">Select a future date for your trip</p>
                   </div>
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Travelers</label>
+                    <div className="flex items-center gap-3" role="group" aria-label="Number of travelers">
+                      <button type="button" onClick={() => setBooking({ ...booking, travelers: Math.max(1, booking.travelers - 1) })}
+                        className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg" aria-label="Decrease travelers">−</button>
+                      <span className="font-semibold text-lg w-8 text-center" id="traveler-count">{booking.travelers}</span>
+                      <button type="button" onClick={() => setBooking({ ...booking, travelers: Math.min(tour.maxPeople, booking.travelers + 1) })}
+                        className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg" aria-label="Increase travelers">+</button>
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs text-text-muted block mb-1">Special Requests <span className="text-text-muted/50">(optional)</span></label>
-                  <textarea placeholder="Any dietary requirements, room preferences, etc." value={booking.specialRequests}
+                  <label htmlFor="specialRequests" className="text-xs text-text-muted block mb-1">Special Requests <span className="text-text-muted/50">(optional)</span></label>
+                  <textarea id="specialRequests" name="specialRequests" placeholder="Any dietary requirements, room preferences, etc." value={booking.specialRequests}
                     onChange={(e) => setBooking({ ...booking, specialRequests: e.target.value })}
                     rows={2}
                     className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors resize-none" />
@@ -616,28 +619,28 @@ export function CheckoutPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Card Number</label>
-                    <input type="text" placeholder="1234 5678 9012 3456" value={cardNumber}
+                    <label htmlFor="cardNumber" className="text-xs text-text-muted block mb-1">Card Number</label>
+                    <input type="text" id="cardNumber" name="cardNumber" autoComplete="cc-number" placeholder="1234 5678 9012 3456" value={cardNumber}
                       onChange={(e) => setCardNumber(formatCard(e.target.value))} maxLength={19}
                       className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs text-text-muted block mb-1">Expiry</label>
-                      <input type="text" placeholder="MM/YY" value={cardExpiry}
+                      <label htmlFor="cardExpiry" className="text-xs text-text-muted block mb-1">Expiry</label>
+                      <input type="text" id="cardExpiry" name="cardExpiry" autoComplete="cc-exp" placeholder="MM/YY" value={cardExpiry}
                         onChange={(e) => setCardExpiry(formatExpiry(e.target.value))} maxLength={5}
                         className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                     </div>
                     <div>
-                      <label className="text-xs text-text-muted block mb-1">CVV</label>
-                      <input type="password" placeholder="•••" value={cardCvv}
+                      <label htmlFor="cardCvv" className="text-xs text-text-muted block mb-1">CVV</label>
+                      <input type="password" id="cardCvv" name="cardCvv" autoComplete="cc-csc" placeholder="•••" value={cardCvv}
                         onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))} maxLength={4}
                         className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">Name on Card</label>
-                    <input type="text" placeholder="John Doe" value={cardName}
+                    <label htmlFor="cardName" className="text-xs text-text-muted block mb-1">Name on Card</label>
+                    <input type="text" id="cardName" name="cardName" autoComplete="cc-name" placeholder="John Doe" value={cardName}
                       onChange={(e) => setCardName(e.target.value)}
                       className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                   </div>
@@ -682,9 +685,9 @@ export function CheckoutPage() {
                     </div>
                     <div className="flex-1 space-y-3 w-full">
                       <div>
-                        <label className="text-xs text-text-muted block mb-1.5">UPI ID / VPA</label>
+                        <label htmlFor="upiId" className="text-xs text-text-muted block mb-1.5">UPI ID / VPA</label>
                         <div className="flex gap-2">
-                          <input type="text" placeholder="yourname@upi" value={upiId}
+                          <input type="text" id="upiId" name="upiId" autoComplete="off" placeholder="yourname@upi" value={upiId}
                             onChange={(e) => setUpiId(e.target.value.toLowerCase())}
                             className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                           <button onClick={handleCopyUpi}
@@ -851,7 +854,8 @@ export function CheckoutPage() {
                   ) : (
                     <>
                       <div className="flex gap-2">
-                        <input type="text" placeholder="Enter code" value={offerInput}
+                        <label htmlFor="couponCode" className="sr-only">Coupon Code</label>
+                        <input type="text" id="couponCode" name="couponCode" autoComplete="off" placeholder="Enter code" value={offerInput}
                           onChange={(e) => { setOfferInput(e.target.value.toUpperCase()); setOfferError(""); }}
                           onKeyDown={(e) => e.key === "Enter" && handleApplyOffer()}
                           className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-3 py-2 text-sm outline-none focus:border-accent/50 transition-colors uppercase" />
