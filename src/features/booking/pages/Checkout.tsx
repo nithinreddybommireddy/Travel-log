@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { tours } from "@/features/tours/data/tours";
 import { offerCodes, validateOfferCode } from "@/features/booking/data/offers";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { sendBookingConfirmation } from "@/services/emailService";
 
@@ -60,6 +61,7 @@ export function CheckoutPage() {
   const { showToast } = useToast();
 
   const tour = tours.find((t) => t.id === id);
+  const { user } = useAuth();
 
   // Today's date in YYYY-MM-DD format (for min date on date picker)
   const todayDate = useMemo(() => {
@@ -73,12 +75,12 @@ export function CheckoutPage() {
   // Load saved draft on mount
   const savedDraft = useMemo(() => (id ? loadDraft(id) : null), [id]);
 
-  // Booking form state
+  // Booking form state — pre-fill Name & Email from logged-in user's profile
   const [booking, setBooking] = useState<BookingState>(() => ({
     travelers: savedDraft?.travelers ?? Math.min(rebookTravelers, tour?.maxPeople || 30),
     startDate: savedDraft?.startDate ?? "",
-    customerName: savedDraft?.customerName ?? "",
-    customerEmail: savedDraft?.customerEmail ?? "",
+    customerName: savedDraft?.customerName ?? user?.name ?? "",
+    customerEmail: savedDraft?.customerEmail ?? user?.email ?? "",
     customerPhone: savedDraft?.customerPhone ?? "",
     specialRequests: savedDraft?.specialRequests ?? "",
   }));
