@@ -4,14 +4,10 @@ import { motion } from "framer-motion";
 import { MapPin, Clock, Users, Star, Search, Heart, Flame, Sparkles, Crown, ArrowUp, ArrowDown, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { tours, categories, priceTiers, getPriceTierInfo, type TourCategory, type PriceTier } from "@/features/tours/data/tours";
+import { tours, categories, getPriceTierInfo, type TourCategory, type PriceTier } from "@/features/tours/data/tours";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useSavedTours } from "@/services/storageService";
 import { useToast } from "@/hooks/use-toast";
-
-const difficultyColors = {
-  easy: "success", medium: "warning", hard: "danger",
-} as const;
 
 const priceBadgeIcons: Record<PriceTier, typeof Flame> = {
   budget: Flame,
@@ -27,8 +23,7 @@ export function ToursPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<TourCategory | "all">("all");
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
-  const [priceFilter, setPriceFilter] = useState<PriceTier | "all">("all");
+  const [priceFilter, setPriceFilter] = useState<"all" | "budget" | "mid" | "premium">("all");
   const [sortOrder, setSortOrder] = useState<"none" | "low-to-high" | "high-to-low" | "rating">("none");
 
   let filteredTours = tours.filter((tour) => {
@@ -36,9 +31,13 @@ export function ToursPage() {
       tour.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tour.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === "all" || tour.category === categoryFilter;
-    const matchesDifficulty = difficultyFilter === "all" || tour.difficulty === difficultyFilter;
-    const matchesPrice = priceFilter === "all" || getPriceTierInfo(tour.price).id === priceFilter;
-    return matchesSearch && matchesCategory && matchesDifficulty && matchesPrice;
+    const matchesPrice = priceFilter === "all" || (() => {
+      if (priceFilter === "budget") return tour.price < 10000;
+      if (priceFilter === "mid") return tour.price >= 10000 && tour.price < 25000;
+      if (priceFilter === "premium") return tour.price >= 25000;
+      return true;
+    })();
+    return matchesSearch && matchesCategory && matchesPrice;
   });
 
   if (sortOrder === "low-to-high") {
@@ -147,31 +146,33 @@ export function ToursPage() {
               }`}>
               All Prices
             </button>
-            {priceTiers.map((tier) => (
-              <button key={tier.id} onClick={() => setPriceFilter(tier.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1 ${
-                  priceFilter === tier.id
-                    ? "text-white border"
-                    : "text-text-muted hover:text-text-secondary border border-transparent bg-surface-lighter/30"
-                }`}
-                style={priceFilter === tier.id ? { backgroundColor: tier.color, borderColor: tier.color } : undefined}>
-                {tier.badge}
-              </button>
-            ))}
-          </div>
-
-          {/* Difficulty Filters */}
-          <div className="flex gap-2 flex-wrap">
-            {["all", "easy", "medium", "hard"].map((diff) => (
-              <button key={diff} onClick={() => setDifficultyFilter(diff)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 capitalize ${
-                  difficultyFilter === diff
-                    ? "bg-surface-lighter text-text-primary border border-border-light"
-                    : "text-text-muted hover:text-text-secondary border border-transparent"
-                }`}>
-                {diff === "all" ? "All Difficulties" : diff}
-              </button>
-            ))}
+            <button onClick={() => setPriceFilter("budget")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                priceFilter === "budget"
+                  ? "bg-green-500/20 text-green-400 border border-green-500/30 shadow-sm"
+                  : "text-text-muted hover:text-text-secondary border border-transparent bg-surface-lighter/30"
+              }`}>
+              <span className="text-xs">₹</span>
+              Under ₹10K
+            </button>
+            <button onClick={() => setPriceFilter("mid")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                priceFilter === "mid"
+                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-sm"
+                  : "text-text-muted hover:text-text-secondary border border-transparent bg-surface-lighter/30"
+              }`}>
+              <span className="text-xs">₹₹</span>
+              ₹10K – ₹25K
+            </button>
+            <button onClick={() => setPriceFilter("premium")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                priceFilter === "premium"
+                  ? "bg-red-500/20 text-red-400 border border-red-500/30 shadow-sm"
+                  : "text-text-muted hover:text-text-secondary border border-transparent bg-surface-lighter/30"
+              }`}>
+              <span className="text-xs">₹₹₹</span>
+              ₹25K+
+            </button>
           </div>
         </motion.div>
       </div>
@@ -195,10 +196,7 @@ export function ToursPage() {
                     <img src={tour.image} alt={tour.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-surface-light via-transparent to-transparent" />
                     <div className="absolute top-4 left-4 flex gap-2">
-                      <Badge variant={difficultyColors[tour.difficulty]}>{tour.difficulty}</Badge>
-                    </div>
-                    <div className="absolute top-4 left-4 flex gap-2 mt-8">
-                      <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-0"
+                      <Badge variant="outline" className="text-xs px-2.5 py-1 flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-0"
                         style={{ color: tierInfo.color }}>
                         <PriceIcon className="w-3 h-3" style={{ color: tierInfo.color }} />
                         {tierInfo.badge}
