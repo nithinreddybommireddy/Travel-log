@@ -58,7 +58,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
       "https://images.unsplash.com/photo-1596294371763-e6fcf62c09cb?w=800&q=80",
     ],
-    price: 12000, duration: "7 days", maxPeople: 20, tourGuides: 4,
+    price: 18999, duration: "7 days", maxPeople: 20, tourGuides: 4,
     accommodation: "Private Tents & Resort", difficulty: "medium", category: "hill-station",
     highlights: ["Rohtang Pass expedition at 3,978m", "Solang Valley paragliding", "Hadimba Temple (16th century)", "River rafting in Beas River", "Camping under Himalayan stars", "Tibetan monastery visit"],
     itinerary: [
@@ -91,7 +91,7 @@ export const tours: Tour[] = [
       "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Boys_and_girls_at_Goa_beach.jpg/1280px-Boys_and_girls_at_Goa_beach.jpg",
       "https://images.unsplash.com/photo-1540202404-a2f29016b523?w=800&q=80",
     ],
-    price: 8999, duration: "6 days", maxPeople: 30, tourGuides: 5,
+    price: 16999, duration: "6 days", maxPeople: 30, tourGuides: 5,
     accommodation: "Beach Resort", difficulty: "easy", category: "beach",
     highlights: ["103 km of pristine coastline", "Water sports - parasailing, jet skiing", "Portuguese architecture tour (16th century)", "Sunset cruise on Mandovi River", "Goan seafood feast & nightlife", "Spice plantation tour"],
     itinerary: [
@@ -123,7 +123,7 @@ export const tours: Tour[] = [
       "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/MunnarTown1.JPG/1280px-MunnarTown1.JPG",
       "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Munnar_-_View_from_Grand_Plaza_Hotel.jpg/1280px-Munnar_-_View_from_Grand_Plaza_Hotel.jpg",
     ],
-    price: 9999, duration: "7 days", maxPeople: 20, tourGuides: 8,
+    price: 14999, duration: "7 days", maxPeople: 20, tourGuides: 8,
     accommodation: "Tea Estate Resort", difficulty: "easy", category: "hill-station",
     highlights: ["Tea plantation tour since 1877", "Eravikulam National Park safari", "Mattupetty Dam boating", "Top Station viewpoint trek (1,700m)", "Spice garden exploration", "Nilgiri Tahr spotting"],
     itinerary: [
@@ -155,7 +155,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1470071459604-a3a0d0f0a0c9?w=800&q=80",
       "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80",
     ],
-    price: 5999, duration: "5 days", maxPeople: 20, tourGuides: 4,
+    price: 7999, duration: "5 days", maxPeople: 20, tourGuides: 4,
     accommodation: "Eco Tents", difficulty: "easy", category: "adventure",
     highlights: ["Coffee plantation tour (Arabica beans)", "Borra Caves - 150 million years old", "Tribal museum - 75 tribes", "Chaparu waterfall trek", "Sunset at Ananthagiri hills", "Tribal dance performance"],
     itinerary: [
@@ -185,7 +185,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80",
       "https://images.unsplash.com/photo-1416339684178-3a239570f315?w=800&q=80",
     ],
-    price: 8999, duration: "7 days", maxPeople: 20, tourGuides: 4,
+    price: 14999, duration: "7 days", maxPeople: 20, tourGuides: 4,
     accommodation: "Heritage Hotel", difficulty: "easy", category: "cultural",
     highlights: ["French Quarter heritage walk (18th century)", "Sri Aurobindo Ashram visit", "Paradise Beach & water sports", "Auroville - the experimental township", "French-Indian fusion cooking class", "Promenade sunset walk"],
     itinerary: [
@@ -217,7 +217,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80",
       "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
     ],
-    price: 14999, duration: "7 days", maxPeople: 20, tourGuides: 8,
+    price: 16999, duration: "7 days", maxPeople: 20, tourGuides: 8,
     accommodation: "Guest House & Camp", difficulty: "hard", category: "pilgrimage",
     highlights: ["Kedarnath Temple (8th century)", "16 km scenic trek through Himalayas", "Gaurikund thermal springs", "Vasuki Tal lake trek at 4,135m", "Panoramic Himalayan views", "Ganga Aarti at Haridwar"],
     itinerary: [
@@ -251,7 +251,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80",
       "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80",
     ],
-    price: 6999, duration: "5 days", maxPeople: 25, tourGuides: 4,
+    price: 11999, duration: "5 days", maxPeople: 25, tourGuides: 4,
     accommodation: "Heritage Hotel & Business Hotel", difficulty: "easy", category: "cultural",
     highlights: ["Charminar - iconic 1591 monument", "Golconda Fort & light & sound show", "Hyderabadi biryani at Paradise", "Hussain Sagar & Buddha statue", "Chowmahalla Palace (Nizams' palace)", "Ramoji Film City tour"],
     itinerary: [
@@ -282,7 +282,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1439853949127-fa647821eba0?w=800&q=80",
       "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&q=80",
     ],
-    price: 5999, duration: "5 days", maxPeople: 25, tourGuides: 4,
+    price: 9999, duration: "5 days", maxPeople: 25, tourGuides: 4,
     accommodation: "Beach Resort & Hotel", difficulty: "easy", category: "beach",
     highlights: ["RK Beach & Yarada Beach sunset", "INS Kursura submarine museum", "Simhachalam Temple (11th century)", "Kambalakonda Wildlife Sanctuary trek", "Borra Caves expedition", "VUDA Park & aquarium"],
     itinerary: [
@@ -315,7 +315,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=800&q=80",
       "https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?w=800&q=80",
     ],
-    price: 24999, duration: "8 days", maxPeople: 25, tourGuides: 5,
+    price: 54999, duration: "8 days", maxPeople: 25, tourGuides: 5,
     accommodation: "Beach Resort", difficulty: "easy", category: "beach",
     highlights: ["Tanah Lot sunset temple (16th century)", "Ubud monkey forest & rice terraces", "Uluwatu temple on cliff's edge", "Surfing at Seminyak", "Balinese cooking class", "Nusa Penida island excursion"],
     itinerary: [
@@ -349,7 +349,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1582561424758-d9f3a9c4f3f3?w=800&q=80",
       "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=800&q=80",
     ],
-    price: 19999, duration: "7 days", maxPeople: 30, tourGuides: 4,
+    price: 44999, duration: "7 days", maxPeople: 30, tourGuides: 4,
     accommodation: "Beachfront Resort", difficulty: "easy", category: "beach",
     highlights: ["Phi Phi Islands snorkeling", "James Bond Island tour (Phang Nga Bay)", "Big Buddha at 45m tall", "Phuket Old Town walking tour", "Thai cooking class", "Sunday Walking Street Market"],
     itinerary: [
@@ -382,7 +382,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1546412414-e1885e5114d0?w=800&q=80",
       "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?w=800&q=80",
     ],
-    price: 29999, duration: "6 days", maxPeople: 25, tourGuides: 4,
+    price: 64999, duration: "6 days", maxPeople: 25, tourGuides: 4,
     accommodation: "5-Star Hotel", difficulty: "easy", category: "cultural",
     highlights: ["Burj Khalifa - world's tallest (828m)", "Desert safari with dune bashing", "Dubai Mall & fountain show", "Abra ride in Dubai Creek", "Palm Jumeirah & Atlantis", "Gold Souk & Spice Souk"],
     itinerary: [
@@ -413,7 +413,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=800&q=80",
       "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=800&q=80",
     ],
-    price: 17999, duration: "6 days", maxPeople: 20, tourGuides: 4,
+    price: 39999, duration: "6 days", maxPeople: 20, tourGuides: 4,
     accommodation: "Beach Bungalow", difficulty: "medium", category: "adventure",
     highlights: ["Railay Beach rock climbing (700+ routes)", "Four Islands snorkeling tour", "Emerald Pool & hot springs", "Hong Islands lagoon kayaking", "Tiger Cave Temple (1,237 steps)", "Phra Nang Cave beach"],
     itinerary: [
@@ -445,7 +445,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=800&q=80",
       "https://images.unsplash.com/photo-1571201313253-8f4e503dc7a9?w=800&q=80",
     ],
-    price: 44999, duration: "7 days", maxPeople: 20, tourGuides: 5,
+    price: 104999, duration: "7 days", maxPeople: 20, tourGuides: 5,
     accommodation: "Caldera View Hotel", difficulty: "easy", category: "romantic",
     highlights: ["Oia sunset viewed from castle ruins", "Volcanic hot springs boat tour", "Akrotiri ruins (Minoan, 1600 BCE)", "Santorini wine tasting (Assyrtiko grape)", "Red Beach & Kamari black sand beach", "Fira to Oia coastal hike (10 km)"],
     itinerary: [
@@ -477,7 +477,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
       "https://images.unsplash.com/photo-1559650656-5d1d361ad10e?w=800&q=80",
     ],
-    price: 12999, duration: "6 days", maxPeople: 15, tourGuides: 4,
+    price: 19999, duration: "6 days", maxPeople: 15, tourGuides: 4,
     accommodation: "Houseboat & Ayurvedic Resort", difficulty: "easy", category: "romantic",
     highlights: ["Alleppey houseboat cruise (900 km canals)", "Ayurvedic massage & wellness (3,000 year tradition)", "Kochi Fort & Chinese fishing nets", "Kathakali dance performance", "Kerala seafood feast", "Spice market tour"],
     itinerary: [
@@ -509,7 +509,7 @@ export const tours: Tour[] = [
       "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?w=800&q=80",
       "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&q=80",
     ],
-    price: 49999, duration: "8 days", maxPeople: 20, tourGuides: 6,
+    price: 89999, duration: "8 days", maxPeople: 20, tourGuides: 6,
     accommodation: "Business Hotel", difficulty: "easy", category: "cultural",
     highlights: ["Shibuya crossing - 3,000 people/crossing", "Senso-ji temple - Tokyo's oldest (645 AD)", "Tsukiji outer market sushi", "Akihabara electronics district", "Mount Fuji & Hakone day trip", "TeamLab Borderless digital art"],
     itinerary: [
@@ -548,7 +548,7 @@ export type PriceTier = "budget" | "mid-range" | "premium";
 
 export const priceTiers: { id: PriceTier; label: string; badge: string; color: string; max: number }[] = [
   { id: "budget", label: "Budget", badge: "🔥 Under ₹10K", color: "#22c55e", max: 10000 },
-  { id: "mid-range", label: "Mid-Range", badge: "💎 ₹10K-₹25K", color: "#f59e0b", max: 25000 },
+  { id: "mid-range", label: "Mid-Range", badge: "💎 ₹10K–₹25K", color: "#f59e0b", max: 25000 },
   { id: "premium", label: "Premium", badge: "🌟 ₹25K+", color: "#ef4444", max: Infinity },
 ];
 
