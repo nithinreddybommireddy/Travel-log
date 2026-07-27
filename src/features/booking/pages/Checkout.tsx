@@ -5,7 +5,7 @@ import {
   ArrowLeft, Shield, CreditCard, Smartphone, Building2,
   CheckCircle2, BadgePercent, Users, Ticket,
   Loader2, Wallet, Mail, MessageSquare, MessageCircle,
-  Copy, Check, QrCode, ExternalLink, CalendarDays,
+  CalendarDays,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,7 @@ import {
   sendWhatsAppToAllTravelers,
   sendSMSToAllTravelers,
 } from "@/services/notificationService";
-
-type PaymentMethod = "card" | "upi" | "netbanking";
+import { initiateRazorpayPayment } from "@/services/razorpayService";
 
 interface TravelerInfo {
   name: string;
@@ -152,11 +151,7 @@ export function CheckoutPage() {
   const [offerError, setOfferError] = useState("");
   const [offerLoading, setOfferLoading] = useState(false);
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [cardName, setCardName] = useState("");
+
 
   if (!tour) {
     return (
@@ -177,57 +172,6 @@ export function CheckoutPage() {
   const bookingFee = 199;
   const discount = appliedOffer?.discount || 0;
   const total = basePrice + totalGst + bookingFee - discount;
-
-  const [upiId, setUpiId] = useState("travellog@upi");
-  const [selectedUpiApp, setSelectedUpiApp] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const upiPaymentUrl = useMemo(() => {
-    const cleanUpi = upiId.replace(/\s/g, "");
-    if (!cleanUpi.includes("@")) return "";
-    const params = new URLSearchParams({
-      pa: cleanUpi,
-      pn: "TravelLog",
-      am: total.toString(),
-      cu: "INR",
-      tn: `Booking for ${tour.name}`.slice(0, 50),
-    });
-    return `upi://pay?${params.toString()}`;
-  }, [upiId, total, tour?.name]);
-
-  const qrCodeUrl = useMemo(() => {
-    if (!upiPaymentUrl) return "";
-    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiPaymentUrl)}&bgcolor=ffffff&color=1a1a2e&margin=10`;
-  }, [upiPaymentUrl]);
-
-  const handleCopyUpi = () => {
-    const cleanUpi = upiId.replace(/\s/g, "");
-    if (cleanUpi) {
-      navigator.clipboard.writeText(cleanUpi).then(() => {
-        setCopied(true);
-        showToast("UPI ID copied!", "success");
-        setTimeout(() => setCopied(false), 2000);
-      });
-    }
-  };
-
-  const handleOpenUpiApp = (appName: string) => {
-    setSelectedUpiApp(appName);
-    if (upiPaymentUrl) {
-      window.open(upiPaymentUrl, "_blank");
-    }
-  };
-
-  const formatCard = (val: string) => {
-    const digits = val.replace(/\D/g, "").slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-  };
-
-  const formatExpiry = (val: string) => {
-    const digits = val.replace(/\D/g, "").slice(0, 4);
-    if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return digits;
-  };
 
   const formatPhone = (val: string) => {
     return val.replace(/\D/g, "").slice(0, 10);
@@ -259,7 +203,9 @@ export function CheckoutPage() {
     setOfferError("");
   };
 
-  const handlePay = () => {
+  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder";
+
+  const handlePay = async () => {
     let b = bookingRef.current;
 
     const nameEl = document.getElementById("customerName") as HTMLInputElement | null;
@@ -318,6 +264,25 @@ export function CheckoutPage() {
     setFieldErrors({});
     clearDraft();
 
+    // Open Razorpay payment modal
+    showToast("Opening Razorpay checkout... 💳", "info");
+    const result = await initiateRazorpayPayment({
+      keyId: razorpayKeyId,
+      amount: total,
+      name: "TravelLog",
+      description: `Booking for ${tour.name} - ${tour.duration}`.slice(0, 30),
+      customerName: b.customerName,
+      customerEmail: b.customerEmail,
+      customerPhone: b.customerPhone,
+      themeColor: "#f59e0b",
+    });
+
+    if (!result.success) {
+      showToast(`⚠️ ${result.error}`, "info");
+      return;
+    }
+
+    // Payment succeeded — save booking to localStorage
     const bookingId = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const newBooking = {
       id: bookingId,
@@ -334,42 +299,23 @@ export function CheckoutPage() {
       customerEmail: b.customerEmail,
       customerPhone: b.customerPhone,
       travelerDetails: b.travelerDetails,
+      paymentId: result.paymentId,
     };
-    console.log("[Checkout] newBooking object:", newBooking);
+    console.log("[Checkout] Payment successful, saving booking:", newBooking);
 
-    let saveSuccess = false;
     try {
       let existing: any[] = [];
       const raw = localStorage.getItem("travellog_bookings");
-      console.log("[Checkout] raw localStorage:", raw);
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) existing = parsed;
-        } catch (parseErr) {
-          console.warn("[Checkout] corrupted data, starting fresh", parseErr);
-          existing = [];
-        }
+        } catch { existing = []; }
       }
       existing.unshift(newBooking);
-      const jsonStr = JSON.stringify(existing.slice(0, 50));
-      localStorage.setItem("travellog_bookings", jsonStr);
-      console.log("[Checkout] saved", existing.length, "bookings");
-
-      const verifyRaw = localStorage.getItem("travellog_bookings");
-      if (verifyRaw) {
-        const verifyParsed = JSON.parse(verifyRaw);
-        const found = Array.isArray(verifyParsed) && verifyParsed.find((x: any) => x.id === bookingId);
-        console.log("[Checkout] verification:", found ? "✅ FOUND" : "❌ NOT FOUND");
-        saveSuccess = !!found;
-      }
+      localStorage.setItem("travellog_bookings", JSON.stringify(existing.slice(0, 50)));
     } catch (saveErr) {
       console.error("[Checkout] localStorage save FAILED:", saveErr);
-      saveSuccess = false;
-    }
-
-    if (!saveSuccess) {
-      showToast("⚠️ Could not save booking. Trying alternative storage...", "info");
       try {
         let existing: any[] = [];
         const raw = sessionStorage.getItem("travellog_bookings_fallback");
@@ -379,21 +325,12 @@ export function CheckoutPage() {
         }
         existing.unshift(newBooking);
         sessionStorage.setItem("travellog_bookings_fallback", JSON.stringify(existing.slice(0, 50)));
-        console.log("[Checkout] saved to sessionStorage fallback");
-      } catch (fallbackErr) {
-        console.error("[Checkout] sessionStorage fallback ALSO failed:", fallbackErr);
-        showToast("❌ Booking save failed. Please try again.", "info");
-        return;
-      }
+      } catch { /* ignore */ }
     }
 
-    setStep("processing");
+    setStep("confirmed");
     window.scrollTo({ top: 0, behavior: "smooth" });
-
-    setTimeout(() => {
-      setStep("confirmed");
-      showToast("Booking confirmed! 🎉", "success");
-    }, 2500);
+    showToast("Booking confirmed! 🎉", "success");
   };
 
   const containerVariants = {
@@ -714,172 +651,43 @@ export function CheckoutPage() {
                 </div>
               </motion.div>
 
-              {/* ===== SECTION 3: PAYMENT METHOD ===== */}
-              <motion.div variants={itemVariants}>
-                <h2 className="font-semibold flex items-center gap-2 mb-3">
-                  <Wallet className="w-4 h-4 text-accent" /> Payment Method
-                </h2>
-                <div className="grid grid-cols-3 gap-2">
+              {/* ===== SECTION 3: PAYMENT ===== */}
+              <motion.div variants={itemVariants}
+                className="rounded-2xl border border-border-light bg-gradient-to-br from-accent/5 to-accent/[0.02] p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Wallet className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">Pay with Razorpay</h2>
+                    <p className="text-xs text-text-muted">Secure payments powered by Razorpay</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 opacity-60">
                   {[
-                    { id: "upi" as const, label: "UPI", icon: Smartphone },
-                    { id: "card" as const, label: "Card", icon: CreditCard },
-                    { id: "netbanking" as const, label: "Net Banking", icon: Building2 },
+                    { id: "upi", label: "UPI", icon: Smartphone },
+                    { id: "card", label: "Card", icon: CreditCard },
+                    { id: "netbanking", label: "Net Banking", icon: Building2 },
                   ].map((method) => {
                     const Icon = method.icon;
-                    const active = paymentMethod === method.id;
                     return (
-                      <button key={method.id} onClick={() => setPaymentMethod(method.id)}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                          active ? "border-accent bg-accent/5" : "border-border-light bg-surface-lighter/30 hover:border-accent/30"
-                        }`}>
-                        <Icon className={`w-5 h-5 ${active ? "text-accent" : "text-text-muted"}`} />
-                        <span className={`text-xs font-medium ${active ? "text-accent" : "text-text-muted"}`}>{method.label}</span>
-                      </button>
+                      <div key={method.id}
+                        className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border-light bg-surface-lighter/20">
+                        <Icon className="w-4 h-4 text-text-muted" />
+                        <span className="text-[10px] text-text-muted">{method.label}</span>
+                      </div>
                     );
                   })}
                 </div>
-              </motion.div>
-
-              {/* Card Form */}
-              {paymentMethod === "card" && (
-                <motion.div variants={itemVariants}
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <CreditCard className="w-5 h-5 text-accent" />
-                    <span className="font-semibold text-sm">Card Details</span>
-                    <div className="flex-1" />
-                    <div className="flex gap-1">
-                      {["visa", "mastercard", "rupay"].map((card) => (
-                        <span key={card} className="text-[10px] px-2 py-0.5 rounded bg-surface-lighter/50 text-text-muted border border-border-light capitalize">{card}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="cardNumber" className="text-xs text-text-muted block mb-1">Card Number</label>
-                    <input type="text" id="cardNumber" name="cardNumber" autoComplete="cc-number" placeholder="1234 5678 9012 3456" value={cardNumber}
-                      onChange={(e) => setCardNumber(formatCard(e.target.value))} maxLength={19}
-                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="cardExpiry" className="text-xs text-text-muted block mb-1">Expiry</label>
-                      <input type="text" id="cardExpiry" name="cardExpiry" autoComplete="cc-exp" placeholder="MM/YY" value={cardExpiry}
-                        onChange={(e) => setCardExpiry(formatExpiry(e.target.value))} maxLength={5}
-                        className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                    </div>
-                    <div>
-                      <label htmlFor="cardCvv" className="text-xs text-text-muted block mb-1">CVV</label>
-                      <input type="password" id="cardCvv" name="cardCvv" autoComplete="cc-csc" placeholder="•••" value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))} maxLength={4}
-                        className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="cardName" className="text-xs text-text-muted block mb-1">Name on Card</label>
-                    <input type="text" id="cardName" name="cardName" autoComplete="cc-name" placeholder="John Doe" value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                  </div>
-                </motion.div>
-              )}
-
-              {/* UPI */}
-              {paymentMethod === "upi" && (
-                <motion.div variants={itemVariants}
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-5">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center"><QrCode className="w-5 h-5 text-accent" /></div>
-                    <div><span className="font-semibold text-sm">Scan & Pay with UPI</span><p className="text-[11px] text-text-muted">Scan the QR code or enter your UPI app</p></div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-center gap-5">
-                    <div className="relative shrink-0">
-                      {qrCodeUrl ? (
-                        <div className="bg-white rounded-2xl p-3 shadow-lg shadow-accent/5 border border-border-light">
-                          <img src={qrCodeUrl} alt="UPI QR Code" className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl"
-                            onError={(e) => { const t = e.currentTarget; t.style.display = "none"; const f = t.nextElementSibling; if (f) (f as HTMLElement).style.display = "flex"; }} />
-                          <div className="hidden absolute inset-0 items-center justify-center bg-white/95 rounded-2xl flex-col p-4 text-center">
-                            <QrCode className="w-8 h-8 text-text-muted mb-2" /><p className="text-xs text-text-muted">QR unavailable</p>
-                          </div>
-                          <div className="mt-2 text-center"><span className="text-[10px] font-semibold text-gray-800">₹{total.toLocaleString()}</span></div>
-                        </div>
-                      ) : (
-                        <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-2xl bg-surface-lighter/40 border-2 border-dashed border-border-light flex items-center justify-center">
-                          <div className="text-center"><QrCode className="w-10 h-10 text-text-muted/50 mx-auto mb-2" /><p className="text-[11px] text-text-muted">Enter UPI ID</p></div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-3 w-full">
-                      <div>
-                        <label htmlFor="upiId" className="text-xs text-text-muted block mb-1.5">UPI ID / VPA</label>
-                        <div className="flex gap-2">
-                          <input type="text" id="upiId" name="upiId" autoComplete="off" placeholder="yourname@upi" value={upiId}
-                            onChange={(e) => setUpiId(e.target.value.toLowerCase())}
-                            className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                          <button onClick={handleCopyUpi}
-                            className="w-10 h-10 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-all shrink-0">
-                            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-text-muted" />}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { name: "Google Pay", icon: "📱" },
-                          { name: "PhonePe", icon: "📲" },
-                          { name: "Paytm", icon: "🟡" },
-                          { name: "BHIM", icon: "🇮🇳" },
-                        ].map((app) => {
-                          const active = selectedUpiApp === app.name;
-                          return (
-                            <button key={app.name} onClick={() => handleOpenUpiApp(app.name)}
-                              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                                active ? "border-accent bg-accent/5" : "border-border-light bg-surface-lighter/30 hover:border-accent/30"
-                              }`}>
-                              <span className="text-lg shrink-0">{app.icon}</span>
-                              <span className="text-xs font-medium">{app.name}</span>
-                              <ExternalLink className={`w-3 h-3 ml-auto ${active ? "text-accent" : "text-text-muted/40"}`} />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { step: "1", title: "Scan QR", desc: "Open UPI app & scan" },
-                      { step: "2", title: "Verify", desc: `₹${total.toLocaleString()}` },
-                      { step: "3", title: "Pay", desc: "Enter UPI PIN" },
-                    ].map((item) => (
-                      <div key={item.step} className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-lighter/30 border border-border-light">
-                        <div className="w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">{item.step}</div>
-                        <div><div className="text-[11px] font-medium">{item.title}</div><div className="text-[10px] text-text-muted">{item.desc}</div></div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Net Banking */}
-              {paymentMethod === "netbanking" && (
-                <motion.div variants={itemVariants}
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Building2 className="w-5 h-5 text-accent" /><span className="font-semibold text-sm">Net Banking</span>
-                  </div>
-                  <label htmlFor="netbankingBank" className="sr-only">Select your bank</label>
-                  <select id="netbankingBank" name="netbankingBank" className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors">
-                    <option value="">Select your bank</option>
-                    {["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra", "Yes Bank", "PNB", "Canara Bank"].map((bank) => (
-                      <option key={bank} value={bank}>{bank}</option>
-                    ))}
-                  </select>
-                </motion.div>
-              )}
-
-              <motion.div variants={itemVariants} className="flex items-center gap-2 text-xs text-text-muted">
-                <Shield className="w-4 h-4 text-green-400" /> Your payment is secured with 256-bit SSL encryption.
+                <p className="text-[11px] text-text-muted">
+                  Pay with UPI, Credit/Debit Card, Net Banking, Wallets & more.
+                  All payments are processed securely via Razorpay.
+                </p>
+                <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                  <Shield className="w-3 h-3 text-green-400" />
+                  PCI-DSS compliant · 256-bit SSL · 3D Secure
+                </div>
               </motion.div>
 
               <motion.div variants={itemVariants} className="lg:hidden">
@@ -887,7 +695,7 @@ export function CheckoutPage() {
                   <Wallet className="w-5 h-5" /> Pay ₹{total.toLocaleString()}
                 </Button>
                 <p className="text-[10px] text-text-muted text-center mt-2">
-                  <Shield className="w-3 h-3 inline mr-0.5" /> Secure payment · Cancel within 24 hours
+                  <Shield className="w-3 h-3 inline mr-0.5" /> Powered by Razorpay · 3D Secure
                 </p>
               </motion.div>
             </motion.div>
