@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Compass, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
@@ -20,8 +20,13 @@ export function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(returnTo, { replace: true });
+    }
+  }, [isAuthenticated, navigate, returnTo]);
+
   if (isAuthenticated) {
-    navigate(returnTo, { replace: true });
     return null;
   }
 
