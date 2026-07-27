@@ -30,6 +30,14 @@ export function AuthPage() {
     setLoading(true);
     setError("");
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.\w{2,}$/;
+    if (!email || !emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
     try {
       if (mode === "register") {
         await signUp(name || "Traveler", email, password);

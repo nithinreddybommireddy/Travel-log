@@ -239,9 +239,14 @@ export function CheckoutPage() {
 
     console.log("[Checkout] handlePay clicked", { name: b.customerName, email: b.customerEmail, date: b.startDate, travelerCount: b.travelerDetails.length });
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.\w{2,}$/;
     const errors: { name?: string; email?: string; date?: string; travelers?: string } = {};
     if (!b.customerName?.trim()) errors.name = "Name is required";
-    if (!b.customerEmail?.trim()) errors.email = "Email is required";
+    if (!b.customerEmail?.trim()) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(b.customerEmail.trim())) {
+      errors.email = "Please enter a valid email address";
+    }
     if (!b.startDate) errors.date = "Start date is required";
 
     const missingTravelerNames = b.travelerDetails.some(t => !t.name?.trim());
