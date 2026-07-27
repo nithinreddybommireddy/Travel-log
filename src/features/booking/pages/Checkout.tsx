@@ -1,16 +1,16 @@
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowLeft, Shield, CreditCard, Smartphone, Building2,
   CheckCircle2, BadgePercent, Users, Ticket,
-  Loader2, ChevronRight, Wallet, Sparkles, Mail,
+  Loader2, Wallet, Mail,
   Copy, Check, QrCode, ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { tours } from "@/features/tours/data/tours";
-import { offerCodes, specialOffers, validateOfferCode } from "@/features/booking/data/offers";
+import { offerCodes, validateOfferCode } from "@/features/booking/data/offers";
 import { useToast } from "@/hooks/use-toast";
 import { sendBookingConfirmation } from "@/services/emailService";
 
@@ -53,12 +53,12 @@ export function CheckoutPage() {
   const [offerLoading, setOfferLoading] = useState(false);
 
   // Payment state
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [cardName, setCardName] = useState("");
-  const [step, setStep] = useState<"details" | "payment" | "processing" | "confirmed">("details");
+  const [step, setStep] = useState<"form" | "processing" | "confirmed">("form");
 
   if (!tour) {
     return (
@@ -165,17 +165,15 @@ export function CheckoutPage() {
     setOfferError("");
   };
 
-  const handleProceedToPayment = () => {
+  const handlePay = () => {
+    // Validate required fields
     if (!booking.customerName || !booking.customerEmail || !booking.startDate) {
-      showToast("Please fill in all required fields", "info");
+      showToast("Please fill in all required fields first", "info");
       return;
     }
-    setStep("payment");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handlePay = () => {
     setStep("processing");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
     // Simulate payment processing
     setTimeout(() => {
       setStep("confirmed");
@@ -361,412 +359,251 @@ export function CheckoutPage() {
         </Link>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Main Column */}
+          {/* Main Column - Traveler Details + Payment Method */}
           <div className="lg:col-span-3 space-y-6">
-            <AnimatePresence mode="wait">
-              {/* STEP 1: Details */}
-              {step === "details" && (
-                <motion.div key="details" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0 }} className="space-y-6">
-                  <motion.div variants={itemVariants}>
-                    <h1 className="text-3xl font-bold mb-1">Book Your Trip</h1>
-                    <p className="text-text-secondary text-sm">{tour.name} — {tour.duration}</p>
-                  </motion.div>
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+              <motion.div variants={itemVariants}>
+                <h1 className="text-3xl font-bold mb-1">Book Your Trip</h1>
+                <p className="text-text-secondary text-sm">{tour.name} — {tour.duration}</p>
+              </motion.div>
 
-                  {/* Traveler Details */}
-                  <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
-                    <h2 className="font-semibold flex items-center gap-2">
-                      <Users className="w-4 h-4 text-accent" /> Traveler Details
-                    </h2>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="text-xs text-text-muted block mb-1">Full Name *</label>
-                        <input type="text" placeholder="Enter your name" value={booking.customerName}
-                          onChange={(e) => setBooking({ ...booking, customerName: e.target.value })}
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">Email *</label>
-                        <input type="email" placeholder="your@email.com" value={booking.customerEmail}
-                          onChange={(e) => setBooking({ ...booking, customerEmail: e.target.value })}
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">Phone</label>
-                        <input type="tel" placeholder="9876543210" value={booking.customerPhone}
-                          onChange={(e) => setBooking({ ...booking, customerPhone: formatPhone(e.target.value) })}
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                      </div>
+              {/* Traveler Details */}
+              <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <Users className="w-4 h-4 text-accent" /> Traveler Details
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-text-muted block mb-1">Full Name *</label>
+                    <input type="text" placeholder="Enter your name" value={booking.customerName}
+                      onChange={(e) => setBooking({ ...booking, customerName: e.target.value })}
+                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Email *</label>
+                    <input type="email" placeholder="your@email.com" value={booking.customerEmail}
+                      onChange={(e) => setBooking({ ...booking, customerEmail: e.target.value })}
+                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Phone</label>
+                    <input type="tel" placeholder="9876543210" value={booking.customerPhone}
+                      onChange={(e) => setBooking({ ...booking, customerPhone: formatPhone(e.target.value) })}
+                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Number of Travelers *</label>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setBooking({ ...booking, travelers: Math.max(1, booking.travelers - 1) })}
+                        className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">−</button>
+                      <span className="font-semibold text-lg w-8 text-center">{booking.travelers}</span>
+                      <button onClick={() => setBooking({ ...booking, travelers: Math.min(tour.maxPeople, booking.travelers + 1) })}
+                        className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">+</button>
                     </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">Number of Travelers *</label>
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => setBooking({ ...booking, travelers: Math.max(1, booking.travelers - 1) })}
-                            className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">−</button>
-                          <span className="font-semibold text-lg w-8 text-center">{booking.travelers}</span>
-                          <button onClick={() => setBooking({ ...booking, travelers: Math.min(tour.maxPeople, booking.travelers + 1) })}
-                            className="w-9 h-9 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-colors text-lg">+</button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">Start Date *</label>
-                        <input type="date" value={booking.startDate}
-                          onChange={(e) => setBooking({ ...booking, startDate: e.target.value })}
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-text-muted block mb-1">Special Requests (optional)</label>
-                      <textarea placeholder="Any dietary requirements, room preferences, etc." value={booking.specialRequests}
-                        onChange={(e) => setBooking({ ...booking, specialRequests: e.target.value })}
-                        rows={2}
-                        className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors resize-none" />
-                    </div>
-                  </motion.div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Start Date *</label>
+                    <input type="date" value={booking.startDate}
+                      onChange={(e) => setBooking({ ...booking, startDate: e.target.value })}
+                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-text-muted block mb-1">Special Requests (optional)</label>
+                  <textarea placeholder="Any dietary requirements, room preferences, etc." value={booking.specialRequests}
+                    onChange={(e) => setBooking({ ...booking, specialRequests: e.target.value })}
+                    rows={2}
+                    className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors resize-none" />
+                </div>
+              </motion.div>
 
-                  {/* Offer Code */}
-                  <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-3">
-                    <h2 className="font-semibold flex items-center gap-2">
-                      <BadgePercent className="w-4 h-4 text-accent" /> Apply Coupon
-                    </h2>
-                    {appliedOffer ? (
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-                        <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-green-400">{appliedOffer.code}</div>
-                          <div className="text-xs text-text-muted">You save ₹{appliedOffer.discount.toLocaleString()}</div>
-                        </div>
-                        <button onClick={handleRemoveOffer} className="text-xs text-text-muted hover:text-red-400 transition-colors">Remove</button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex gap-2">
-                          <input type="text" placeholder="Enter coupon code" value={offerInput}
-                            onChange={(e) => { setOfferInput(e.target.value.toUpperCase()); setOfferError(""); }}
-                            onKeyDown={(e) => e.key === "Enter" && handleApplyOffer()}
-                            className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors uppercase" />
-                          <Button variant="secondary" className="gap-2" onClick={handleApplyOffer} disabled={offerLoading || !offerInput.trim()}>
-                            {offerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
-                            Apply
-                          </Button>
-                        </div>
-                        {offerError && <p className="text-xs text-red-400">{offerError}</p>}
-                        <div className="flex flex-wrap gap-1.5">
-                          {offerCodes.slice(0, 4).map((offer) => (
-                            <button key={offer.code}
-                              onClick={() => { setOfferInput(offer.code); setOfferError(""); }}
-                              className="text-[11px] px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors">
-                              {offer.code}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
+              {/* Payment Method Selector */}
+              <motion.div variants={itemVariants}>
+                <h2 className="font-semibold flex items-center gap-2 mb-3">
+                  <Wallet className="w-4 h-4 text-accent" /> Payment Method
+                </h2>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "upi" as const, label: "UPI", icon: Smartphone },
+                    { id: "card" as const, label: "Card", icon: CreditCard },
+                    { id: "netbanking" as const, label: "Net Banking", icon: Building2 },
+                  ].map((method) => {
+                    const Icon = method.icon;
+                    const active = paymentMethod === method.id;
+                    return (
+                      <button key={method.id} onClick={() => setPaymentMethod(method.id)}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                          active
+                            ? "border-accent bg-accent/5"
+                            : "border-border-light bg-surface-lighter/30 hover:border-accent/30"
+                        }`}>
+                        <Icon className={`w-5 h-5 ${active ? "text-accent" : "text-text-muted"}`} />
+                        <span className={`text-xs font-medium ${active ? "text-accent" : "text-text-muted"}`}>{method.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
 
-                  {/* Special Offers */}
-                  <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5">
-                    <h2 className="font-semibold flex items-center gap-2 mb-3">
-                      <Sparkles className="w-4 h-4 text-accent" /> Special Offers
-                    </h2>
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {specialOffers.map((offer) => (
-                        <div key={offer.id} className="flex items-start gap-3 p-3 rounded-xl bg-surface-lighter/30 border border-border-light">
-                          <span className="text-lg">{offer.icon}</span>
-                          <div>
-                            <div className="text-xs font-medium">{offer.title}</div>
-                            <div className="text-[10px] text-text-muted">{offer.description}</div>
-                          </div>
-                        </div>
+              {/* Card Form */}
+              {paymentMethod === "card" && (
+                <motion.div variants={itemVariants}
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CreditCard className="w-5 h-5 text-accent" />
+                    <span className="font-semibold text-sm">Card Details</span>
+                    <div className="flex-1" />
+                    <div className="flex gap-1">
+                      {["visa", "mastercard", "rupay"].map((card) => (
+                        <span key={card} className="text-[10px] px-2 py-0.5 rounded bg-surface-lighter/50 text-text-muted border border-border-light capitalize">{card}</span>
                       ))}
                     </div>
-                  </motion.div>
-
-                  <motion.div variants={itemVariants}>
-                    <Button size="lg" className="w-full gap-2" onClick={handleProceedToPayment}>
-                      Continue to Payment <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              )}
-
-              {/* STEP 2: Payment */}
-              {step === "payment" && (
-                <motion.div key="payment" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0 }} className="space-y-6">
-                  <motion.div variants={itemVariants}>
-                    <button onClick={() => setStep("details")}
-                      className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary mb-4 transition-colors">
-                      <ArrowLeft className="w-4 h-4" /> Back to details
-                    </button>
-                    <h1 className="text-3xl font-bold mb-1">Payment</h1>
-                    <p className="text-text-secondary text-sm">Choose your payment method</p>
-                  </motion.div>
-
-                  {/* Payment Methods */}
-                  <motion.div variants={itemVariants} className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: "card" as const, label: "Card", icon: CreditCard },
-                        { id: "upi" as const, label: "UPI", icon: Smartphone },
-                        { id: "netbanking" as const, label: "Net Banking", icon: Building2 },
-                      ].map((method) => {
-                        const Icon = method.icon;
-                        const active = paymentMethod === method.id;
-                        return (
-                          <button key={method.id} onClick={() => setPaymentMethod(method.id)}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                              active
-                                ? "border-accent bg-accent/5"
-                                : "border-border-light bg-surface-lighter/30 hover:border-accent/30"
-                            }`}>
-                            <Icon className={`w-5 h-5 ${active ? "text-accent" : "text-text-muted"}`} />
-                            <span className={`text-xs font-medium ${active ? "text-accent" : "text-text-muted"}`}>{method.label}</span>
-                          </button>
-                        );
-                      })}
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Card Number</label>
+                    <input type="text" placeholder="1234 5678 9012 3456" value={cardNumber}
+                      onChange={(e) => setCardNumber(formatCard(e.target.value))} maxLength={19}
+                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-text-muted block mb-1">Expiry</label>
+                      <input type="text" placeholder="MM/YY" value={cardExpiry}
+                        onChange={(e) => setCardExpiry(formatExpiry(e.target.value))} maxLength={5}
+                        className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
                     </div>
-                  </motion.div>
-
-                  {/* Card Form */}
-                  {paymentMethod === "card" && (
-                    <motion.div variants={itemVariants}
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                      className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CreditCard className="w-5 h-5 text-accent" />
-                        <span className="font-semibold text-sm">Card Details</span>
-                        <div className="flex-1" />
-                        <div className="flex gap-1">
-                          {["visa", "mastercard", "rupay"].map((card) => (
-                            <span key={card} className="text-[10px] px-2 py-0.5 rounded bg-surface-lighter/50 text-text-muted border border-border-light capitalize">{card}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">Card Number</label>
-                        <input type="text" placeholder="1234 5678 9012 3456" value={cardNumber}
-                          onChange={(e) => setCardNumber(formatCard(e.target.value))} maxLength={19}
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-xs text-text-muted block mb-1">Expiry</label>
-                          <input type="text" placeholder="MM/YY" value={cardExpiry}
-                            onChange={(e) => setCardExpiry(formatExpiry(e.target.value))} maxLength={5}
-                            className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-text-muted block mb-1">CVV</label>
-                          <input type="password" placeholder="•••" value={cardCvv}
-                            onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))} maxLength={4}
-                            className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs text-text-muted block mb-1">Name on Card</label>
-                        <input type="text" placeholder="John Doe" value={cardName}
-                          onChange={(e) => setCardName(e.target.value)}
-                          className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* UPI Form */}
-                  {paymentMethod === "upi" && (
-                    <motion.div variants={itemVariants}
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                      className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-5"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                          <QrCode className="w-5 h-5 text-accent" />
-                        </div>
-                        <div>
-                          <span className="font-semibold text-sm">Scan & Pay with UPI</span>
-                          <p className="text-[11px] text-text-muted">Scan the QR code or enter your UPI app</p>
-                        </div>
-                      </div>
-
-                      {/* QR Code Display */}
-                      <div className="flex flex-col sm:flex-row items-center gap-5">
-                        <div className="relative shrink-0">
-                          {qrCodeUrl ? (
-                            <div className="bg-white rounded-2xl p-3 shadow-lg shadow-accent/5 border border-border-light">
-                              <img
-                                src={qrCodeUrl}
-                                alt="UPI QR Code"
-                                className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl"
-                                onError={(e) => {
-                                  const target = e.currentTarget;
-                                  target.style.display = "none";
-                                  const fallback = target.nextElementSibling;
-                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
-                                }}
-                              />
-                              <div className="hidden absolute inset-0 items-center justify-center bg-white/95 rounded-2xl flex-col p-4 text-center">
-                                <QrCode className="w-8 h-8 text-text-muted mb-2" />
-                                <p className="text-xs text-text-muted">QR unavailable</p>
-                              </div>
-                              <div className="mt-2 text-center">
-                                <span className="text-[10px] font-semibold text-gray-800">₹{total.toLocaleString()}</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-2xl bg-surface-lighter/40 border-2 border-dashed border-border-light flex items-center justify-center">
-                              <div className="text-center">
-                                <QrCode className="w-10 h-10 text-text-muted/50 mx-auto mb-2" />
-                                <p className="text-[11px] text-text-muted">Enter UPI ID</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 space-y-3 w-full">
-                          {/* UPI ID Input */}
-                          <div>
-                            <label className="text-xs text-text-muted block mb-1.5">UPI ID / VPA</label>
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                placeholder="yourname@upi"
-                                value={upiId}
-                                onChange={(e) => setUpiId(e.target.value.toLowerCase())}
-                                className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors"
-                              />
-                              <button
-                                onClick={handleCopyUpi}
-                                className="w-10 h-10 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-all shrink-0"
-                                title="Copy UPI ID"
-                              >
-                                {copied ? (
-                                  <Check className="w-4 h-4 text-green-400" />
-                                ) : (
-                                  <Copy className="w-4 h-4 text-text-muted" />
-                                )}
-                              </button>
-                            </div>
-                            <p className="text-[10px] text-text-muted mt-1">
-                              Amount: <span className="text-accent font-medium">₹{total.toLocaleString()}</span> · Change the UPI ID to your preferred payment address
-                            </p>
-                          </div>
-
-                          {/* Pay with UPI Apps */}
-                          <div>
-                            <label className="text-xs text-text-muted block mb-1.5">Pay with UPI App</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              {[
-                                {
-                                  name: "Google Pay",
-                                  icon: "📱",
-                                  color: "#4285F4",
-                                  description: "Scan with GPay",
-                                },
-                                {
-                                  name: "PhonePe",
-                                  icon: "📲",
-                                  color: "#5F259F",
-                                  description: "Scan with PhonePe",
-                                },
-                                {
-                                  name: "Paytm",
-                                  icon: "🟡",
-                                  color: "#00BAF2",
-                                  description: "Scan with Paytm",
-                                },
-                                {
-                                  name: "BHIM",
-                                  icon: "🇮🇳",
-                                  color: "#1E9A4B",
-                                  description: "Scan with BHIM",
-                                },
-                              ].map((app) => {
-                                const active = selectedUpiApp === app.name;
-                                return (
-                                  <button
-                                    key={app.name}
-                                    onClick={() => handleOpenUpiApp(app.name)}
-                                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-                                      active
-                                        ? "border-accent bg-accent/5"
-                                        : "border-border-light bg-surface-lighter/30 hover:border-accent/30 hover:bg-accent/[0.02]"
-                                    }`}
-                                  >
-                                    <span className="text-lg shrink-0">{app.icon}</span>
-                                    <div className="text-left">
-                                      <div className="text-xs font-medium">{app.name}</div>
-                                      <div className="text-[10px] text-text-muted">{app.description}</div>
-                                    </div>
-                                    <ExternalLink className={`w-3 h-3 ml-auto shrink-0 ${
-                                      active ? "text-accent" : "text-text-muted/40"
-                                    }`} />
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* UPI Payment Instructions */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { step: "1", title: "Scan QR", desc: "Open your UPI app & scan" },
-                          { step: "2", title: "Verify Amount", desc: `₹${total.toLocaleString()}` },
-                          { step: "3", title: "Pay", desc: "Enter UPI PIN to pay" },
-                        ].map((item) => (
-                          <div
-                            key={item.step}
-                            className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-lighter/30 border border-border-light"
-                          >
-                            <div className="w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
-                              {item.step}
-                            </div>
-                            <div>
-                              <div className="text-[11px] font-medium">{item.title}</div>
-                              <div className="text-[10px] text-text-muted">{item.desc}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Net Banking */}
-                  {paymentMethod === "netbanking" && (
-                    <motion.div variants={itemVariants}
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                      className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Building2 className="w-5 h-5 text-accent" />
-                        <span className="font-semibold text-sm">Net Banking</span>
-                      </div>
-                      <select className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors">
-                        <option value="">Select your bank</option>
-                        {["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra", "Yes Bank", "PNB", "Canara Bank"].map((bank) => (
-                          <option key={bank} value={bank}>{bank}</option>
-                        ))}
-                      </select>
-                    </motion.div>
-                  )}
-
-                  {/* Security note */}
-                  <motion.div variants={itemVariants} className="flex items-center gap-2 text-xs text-text-muted">
-                    <Shield className="w-4 h-4 text-green-400" />
-                    Your payment is secured with 256-bit SSL encryption. We do not store your card details.
-                  </motion.div>
-
-                  <motion.div variants={itemVariants}>
-                    <Button size="lg" className="w-full gap-2" onClick={handlePay}>
-                      <Wallet className="w-4 h-4" /> Pay ₹{total.toLocaleString()}
-                    </Button>
-                  </motion.div>
+                    <div>
+                      <label className="text-xs text-text-muted block mb-1">CVV</label>
+                      <input type="password" placeholder="•••" value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))} maxLength={4}
+                        className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Name on Card</label>
+                    <input type="text" placeholder="John Doe" value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                  </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+
+              {/* UPI Form */}
+              {paymentMethod === "upi" && (
+                <motion.div variants={itemVariants}
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-5"
+                >
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <QrCode className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-sm">Scan & Pay with UPI</span>
+                      <p className="text-[11px] text-text-muted">Scan the QR code or enter your UPI app</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center gap-5">
+                    <div className="relative shrink-0">
+                      {qrCodeUrl ? (
+                        <div className="bg-white rounded-2xl p-3 shadow-lg shadow-accent/5 border border-border-light">
+                          <img src={qrCodeUrl} alt="UPI QR Code" className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl"
+                            onError={(e) => { const t = e.currentTarget; t.style.display = "none"; const f = t.nextElementSibling; if (f) (f as HTMLElement).style.display = "flex"; }} />
+                          <div className="hidden absolute inset-0 items-center justify-center bg-white/95 rounded-2xl flex-col p-4 text-center">
+                            <QrCode className="w-8 h-8 text-text-muted mb-2" /><p className="text-xs text-text-muted">QR unavailable</p>
+                          </div>
+                          <div className="mt-2 text-center">
+                            <span className="text-[10px] font-semibold text-gray-800">₹{total.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-2xl bg-surface-lighter/40 border-2 border-dashed border-border-light flex items-center justify-center">
+                          <div className="text-center">
+                            <QrCode className="w-10 h-10 text-text-muted/50 mx-auto mb-2" /><p className="text-[11px] text-text-muted">Enter UPI ID</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-3 w-full">
+                      <div>
+                        <label className="text-xs text-text-muted block mb-1.5">UPI ID / VPA</label>
+                        <div className="flex gap-2">
+                          <input type="text" placeholder="yourname@upi" value={upiId}
+                            onChange={(e) => setUpiId(e.target.value.toLowerCase())}
+                            className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors" />
+                          <button onClick={handleCopyUpi}
+                            className="w-10 h-10 rounded-xl bg-surface-lighter/50 border border-border-light flex items-center justify-center hover:border-accent/30 transition-all shrink-0">
+                            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-text-muted" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { name: "Google Pay", icon: "📱" },
+                          { name: "PhonePe", icon: "📲" },
+                          { name: "Paytm", icon: "🟡" },
+                          { name: "BHIM", icon: "🇮🇳" },
+                        ].map((app) => {
+                          const active = selectedUpiApp === app.name;
+                          return (
+                            <button key={app.name} onClick={() => handleOpenUpiApp(app.name)}
+                              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                                active ? "border-accent bg-accent/5" : "border-border-light bg-surface-lighter/30 hover:border-accent/30"
+                              }`}>
+                              <span className="text-lg shrink-0">{app.icon}</span>
+                              <span className="text-xs font-medium">{app.name}</span>
+                              <ExternalLink className={`w-3 h-3 ml-auto ${active ? "text-accent" : "text-text-muted/40"}`} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { step: "1", title: "Scan QR", desc: "Open UPI app & scan" },
+                      { step: "2", title: "Verify", desc: `₹${total.toLocaleString()}` },
+                      { step: "3", title: "Pay", desc: "Enter UPI PIN" },
+                    ].map((item) => (
+                      <div key={item.step} className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-lighter/30 border border-border-light">
+                        <div className="w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">{item.step}</div>
+                        <div><div className="text-[11px] font-medium">{item.title}</div><div className="text-[10px] text-text-muted">{item.desc}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Net Banking */}
+              {paymentMethod === "netbanking" && (
+                <motion.div variants={itemVariants}
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-border-light bg-surface-lighter/20 p-5 space-y-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Building2 className="w-5 h-5 text-accent" />
+                    <span className="font-semibold text-sm">Net Banking</span>
+                  </div>
+                  <select className="w-full bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors">
+                    <option value="">Select your bank</option>
+                    {["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra", "Yes Bank", "PNB", "Canara Bank"].map((bank) => (
+                      <option key={bank} value={bank}>{bank}</option>
+                    ))}
+                  </select>
+                </motion.div>
+              )}
+
+              {/* Security note */}
+              <motion.div variants={itemVariants} className="flex items-center gap-2 text-xs text-text-muted">
+                <Shield className="w-4 h-4 text-green-400" />
+                Your payment is secured with 256-bit SSL encryption.
+              </motion.div>
+            </motion.div>
           </div>
 
-          {/* Order Summary Sidebar */}
+          {/* Order Summary Sidebar - Fare + Coupon + Pay Now */}
           <div className="lg:col-span-2">
             <div className="lg:sticky lg:top-24">
               <motion.div
@@ -774,6 +611,7 @@ export function CheckoutPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="rounded-2xl border border-border-light bg-surface-lighter/20 overflow-hidden"
               >
+                {/* Tour Info */}
                 <div className="p-5 border-b border-border-light">
                   <div className="flex items-center gap-3">
                     <img src={tour.image} alt={tour.name} className="w-14 h-14 rounded-xl object-cover" />
@@ -784,7 +622,10 @@ export function CheckoutPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Fare Breakdown */}
                 <div className="p-5 space-y-3">
+                  <h3 className="font-semibold text-xs uppercase tracking-wider text-text-muted">Fare Summary</h3>
                   <div className="flex justify-between text-sm">
                     <span className="text-text-muted">Base price (×{booking.travelers})</span>
                     <span>₹{basePrice.toLocaleString()}</span>
@@ -801,27 +642,84 @@ export function CheckoutPage() {
                     <span className="text-text-muted">Booking fee</span>
                     <span>₹{bookingFee}</span>
                   </div>
+
+                  {/* Discount Line */}
                   {discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-400">
-                      <span className="flex items-center gap-1">
-                        <BadgePercent className="w-3 h-3" /> Discount ({appliedOffer?.code})
+                    <div className="flex justify-between text-sm text-green-400 bg-green-500/5 -mx-1 px-3 py-2 rounded-xl">
+                      <span className="flex items-center gap-1 font-medium">
+                        <BadgePercent className="w-3 h-3" /> {appliedOffer?.code}
                       </span>
                       <span>-₹{discount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm pt-3 border-t border-border-light font-semibold">
-                    <span>Total</span>
-                    <span className="text-accent text-lg">₹{total.toLocaleString()}</span>
+
+                  {/* Total */}
+                  <div className="flex justify-between text-base pt-3 border-t border-border-light font-bold">
+                    <span>Total Amount</span>
+                    <span className="text-accent text-xl">₹{total.toLocaleString()}</span>
                   </div>
-                </div>
-                {!appliedOffer && (
-                  <div className="px-5 pb-5">
-                    <div className="p-3 rounded-xl bg-accent/5 border border-accent/10">
-                      <div className="text-xs font-medium text-accent mb-1">💡 Save on this booking!</div>
-                      <p className="text-[10px] text-text-muted">Use code <strong className="text-accent">WELCOME50</strong> for 50% off (max ₹5,000) on first booking</p>
+
+                  {/* Savings badge */}
+                  {discount > 0 && (
+                    <div className="text-center">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
+                        <CheckCircle2 className="w-3 h-3" /> You saved ₹{discount.toLocaleString()}!
+                      </span>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Coupon Code Section (in sidebar, below fare) */}
+                <div className="border-t border-border-light px-5 py-4">
+                  <h3 className="font-semibold text-xs uppercase tracking-wider text-text-muted mb-3 flex items-center gap-1.5">
+                    <BadgePercent className="w-3.5 h-3.5 text-accent" /> Apply Coupon Code
+                  </h3>
+
+                  {appliedOffer ? (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                      <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-green-400">{appliedOffer.code}</div>
+                        <div className="text-xs text-text-muted">You saved ₹{appliedOffer.discount.toLocaleString()}</div>
+                      </div>
+                      <button onClick={handleRemoveOffer} className="text-xs text-red-400 hover:text-red-300 transition-colors">Remove</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="Enter code" value={offerInput}
+                          onChange={(e) => { setOfferInput(e.target.value.toUpperCase()); setOfferError(""); }}
+                          onKeyDown={(e) => e.key === "Enter" && handleApplyOffer()}
+                          className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-3 py-2 text-sm outline-none focus:border-accent/50 transition-colors uppercase" />
+                        <Button variant="secondary" size="sm" className="gap-1" onClick={handleApplyOffer} disabled={offerLoading || !offerInput.trim()}>
+                          {offerLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ticket className="w-3 h-3" />}
+                          Apply
+                        </Button>
+                      </div>
+                      {offerError && <p className="text-xs text-red-400 mt-1">{offerError}</p>}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {offerCodes.slice(0, 4).map((offer) => (
+                          <button key={offer.code}
+                            onClick={() => { setOfferInput(offer.code); setOfferError(""); }}
+                            className="text-[10px] px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors">
+                            {offer.code}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Pay Now Button */}
+                <div className="px-5 pb-5">
+                  <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
+                    <Wallet className="w-5 h-5" /> Pay ₹{total.toLocaleString()}
+                  </Button>
+                  <p className="text-[10px] text-text-muted text-center mt-2">
+                    <Shield className="w-3 h-3 inline mr-0.5" />
+                    Secure payment · You can cancel within 24 hours
+                  </p>
+                </div>
               </motion.div>
             </div>
           </div>
