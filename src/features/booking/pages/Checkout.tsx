@@ -74,10 +74,12 @@ export function CheckoutPage() {
 
   // Pricing
   const basePrice = tour.price * booking.travelers;
-  const gst = Math.round(basePrice * 0.05);
+  const sgst = Math.round(basePrice * 0.025);  // State GST @ 2.5%
+  const cgst = Math.round(basePrice * 0.025);  // Central GST @ 2.5%
+  const totalGst = sgst + cgst;
   const bookingFee = 199;
   const discount = appliedOffer?.discount || 0;
-  const total = basePrice + gst + bookingFee - discount;
+  const total = basePrice + totalGst + bookingFee - discount;
 
   // UPI state - moved after total declaration
   const [upiId, setUpiId] = useState("travellog@upi");
@@ -787,9 +789,13 @@ export function CheckoutPage() {
                     <span className="text-text-muted">Base price (×{booking.travelers})</span>
                     <span>₹{basePrice.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-text-muted">GST (5%)</span>
-                    <span>₹{gst.toLocaleString()}</span>
+                  <div className="flex justify-between text-sm text-blue-400">
+                    <span>SGST (2.5%)</span>
+                    <span>₹{sgst.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-emerald-400">
+                    <span>CGST (2.5%)</span>
+                    <span>₹{cgst.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-text-muted">Booking fee</span>
@@ -812,7 +818,7 @@ export function CheckoutPage() {
                   <div className="px-5 pb-5">
                     <div className="p-3 rounded-xl bg-accent/5 border border-accent/10">
                       <div className="text-xs font-medium text-accent mb-1">💡 Save on this booking!</div>
-                      <p className="text-[10px] text-text-muted">Use code <strong className="text-accent">WELCOME50</strong> for 50% off up to ₹5,000 on first booking</p>
+                      <p className="text-[10px] text-text-muted">Use code <strong className="text-accent">WELCOME50</strong> for 50% off (max ₹5,000) on first booking</p>
                     </div>
                   </div>
                 )}
