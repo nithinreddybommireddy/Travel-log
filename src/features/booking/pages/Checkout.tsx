@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Shield, CreditCard, Smartphone, Building2, Wallet,
+  ArrowLeft, Shield, Smartphone, Wallet,
   CheckCircle2, BadgePercent, Users, Ticket, Loader2,
   Mail, MessageSquare, MessageCircle, CalendarDays,
   ChevronLeft, ChevronRight,
@@ -18,7 +18,7 @@ import {
   sendWhatsAppConfirmation,
   sendSMSConfirmation,
 } from "@/services/notificationService";
-import { initiateRazorpayPayment } from "@/services/razorpayService";
+
 
 interface TravelerInfo {
   name: string;
@@ -145,8 +145,6 @@ export function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [datePage, setDatePage] = useState(0);
 
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
-
   const [offerInput, setOfferInput] = useState("");
   const [appliedOffer, setAppliedOffer] = useState<{ code: string; discount: number } | null>(null);
   const [offerError, setOfferError] = useState("");
@@ -244,7 +242,7 @@ export function CheckoutPage() {
     setOfferError("");
   };
 
-  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder";
+  const UPI_ID = "6301820703@slc";
 
   const handlePay = async () => {
     // Read DOM fallback for autofilled values
@@ -300,25 +298,7 @@ export function CheckoutPage() {
     setForm(b as BookingForm);
     clearDraft();
 
-    showToast("Opening Razorpay checkout... 💳", "info");
-
-    const result = await initiateRazorpayPayment({
-      keyId: razorpayKeyId,
-      amount: total,
-      name: "TravelLog",
-      description: (tour.name + " - " + tour.duration).slice(0, 30),
-      customerName: b.customerName,
-      customerEmail: b.customerEmail,
-      customerPhone: b.customerPhone,
-      themeColor: "#f59e0b",
-    });
-
-    if (!result.success) {
-      showToast("⚠️ " + (result.error || "Payment failed"), "info");
-      return;
-    }
-
-    // Save booking
+    // Save booking as pending
     const bookingId = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const newBooking = {
       id: bookingId,
@@ -330,12 +310,12 @@ export function CheckoutPage() {
       discount: discount,
       coupon: appliedOffer?.code || null,
       bookedAt: Date.now(),
-      status: "confirmed",
+      status: "pending",
       customerName: b.customerName,
       customerEmail: b.customerEmail,
       customerPhone: b.customerPhone,
       travelerDetails: b.travelerDetails,
-      paymentId: result.paymentId,
+      paymentId: "UPI-" + Date.now().toString(36).toUpperCase(),
     };
 
     try {
@@ -1055,68 +1035,58 @@ export function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Payment Section */}
-                <div className="mt-6 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-5 space-y-4">
+                {/* Payment Section - UPI Only */}
+                <div className="mt-6 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 space-y-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <Wallet className="w-6 h-6 text-accent" />
+                    <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                      <Smartphone className="w-6 h-6 text-green-400" />
                     </div>
                     <div>
-                      <h2 className="font-semibold text-lg">Payment</h2>
-                      <p className="text-xs text-text-muted">Choose your preferred payment method</p>
+                      <h2 className="font-semibold text-lg">UPI Payment</h2>
+                      <p className="text-xs text-text-muted">Pay directly via GPay, PhonePe, Paytm or any UPI app</p>
                     </div>
                   </div>
 
-                  {/* Payment Methods - Clickable Cards */}
-                  <p className="text-xs font-medium text-text-muted">Select a payment method:</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { id: "upi", icon: Smartphone, label: "UPI", desc: "GPay, PhonePe, Paytm", color: true },
-                      { id: "cards", icon: CreditCard, label: "Cards", desc: "Credit / Debit", color: false },
-                      { id: "netbanking", icon: Building2, label: "Net Banking", desc: "All banks supported", color: false },
-                      { id: "wallet", icon: Wallet, label: "Wallet", desc: "Paytm, Amazon Pay", color: false },
-                    ].map((method) => {
-                      const Icon = method.icon;
-                      const isSel = selectedPayment === method.id;
-                      return (
-                        <button
-                          key={method.id}
-                          type="button"
-                          onClick={() => setSelectedPayment(method.id)}
-                          className={
-                            "flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200 " +
-                            (isSel
-                              ? "border-accent bg-accent/10 shadow-md shadow-accent/10 scale-[1.02]"
-                              : "border-border-light bg-surface-lighter/20 hover:border-accent/40 hover:bg-accent/5")
-                          }
-                        >
-                          <Icon className={"w-8 h-8 " + (isSel ? "text-accent" : "text-text-muted")} />
-                          <div className="text-center">
-                            <p className={"font-semibold text-sm " + (isSel ? "text-accent" : "")}>{method.label}</p>
-                            <p className="text-[10px] text-text-muted">{method.desc}</p>
-                          </div>
-                          {isSel && (
-                            <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center">
-                              <CheckCircle2 className="w-3 h-3" />
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
+                  {/* UPI ID Display */}
+                  <div className="bg-surface-lighter/30 border-2 border-dashed border-green-500/30 rounded-xl p-5 text-center space-y-3">
+                    <p className="text-xs text-text-muted">Send payment to this UPI ID:</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-2xl font-bold text-green-400 tracking-wide">{UPI_ID}</span>
+                    </div>
+                    <p className="text-sm font-medium">Amount: <span className="text-accent text-xl">₹{total.toLocaleString()}</span></p>
+                    <div className="flex gap-3 justify-center">
+                      <Button
+                        variant="secondary" className="gap-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(UPI_ID);
+                          showToast("UPI ID copied! 📋", "success");
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Copy UPI ID
+                      </Button>
+                      <Button
+                        className="gap-2 bg-green-500 hover:bg-green-600 text-white"
+                        onClick={() => {
+                          const upiUrl = "upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name);
+                          window.open(upiUrl, "_blank");
+                          showToast("UPI app opened! 💚", "success");
+                        }}
+                      >
+                        <Smartphone className="w-4 h-4" /> Pay ₹{total.toLocaleString()}
+                      </Button>
+                    </div>
                   </div>
 
-                  <p className="text-[11px] text-text-muted text-center">
-                    🔒 All payments processed securely via Razorpay • 3D Secure
-                  </p>
-                </div>
+                  {/* After Payment */}
+                  <div className="text-center p-4 rounded-xl bg-accent/5 border border-accent/20">
+                    <p className="text-xs text-text-muted mb-3">After making the payment, click below to confirm your booking:</p>
+                    <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
+                      <CheckCircle2 className="w-5 h-5" /> I've Paid — Confirm Booking
+                    </Button>
+                  </div>
 
-                {/* Pay Now */}
-                <div className="mt-6">
-                  <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
-                    <Wallet className="w-5 h-5" /> Pay ₹{total.toLocaleString()} via Razorpay
-                  </Button>
-                  <p className="text-[10px] text-text-muted text-center mt-2">
-                    <Shield className="w-3 h-3 inline mr-0.5" /> Powered by Razorpay • Cancel within 24 hours
+                  <p className="text-[10px] text-text-muted text-center">
+                    🔒 Your payment is processed directly through your UPI app. We never store your payment details.
                   </p>
                 </div>
 
@@ -1240,10 +1210,10 @@ export function CheckoutPage() {
                 {step === 3 && (
                   <div className="px-5 pb-5 hidden lg:block">
                     <Button size="lg" className="w-full gap-2 text-base" onClick={handlePay}>
-                      <Wallet className="w-5 h-5" /> Pay ₹{total.toLocaleString()}
+                      <CheckCircle2 className="w-5 h-5" /> Confirm Booking — ₹{total.toLocaleString()}
                     </Button>
                     <p className="text-[10px] text-text-muted text-center mt-2">
-                      <Shield className="w-3 h-3 inline mr-0.5" /> Secure payment via Razorpay
+                      <Smartphone className="w-3 h-3 inline mr-0.5" /> Pay via UPI: {UPI_ID}
                     </p>
                   </div>
                 )}
