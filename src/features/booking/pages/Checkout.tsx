@@ -235,6 +235,8 @@ export function CheckoutPage() {
   const handlePay = () => {
     // Use ref to get the absolute latest booking data
     const b = bookingRef.current;
+    console.log("[Checkout] handlePay clicked", { name: b.customerName, email: b.customerEmail, date: b.startDate });
+
     // Validate required fields with specific error messages
     const errors: { name?: string; email?: string; date?: string } = {};
     if (!b.customerName?.trim()) errors.name = "Name is required";
@@ -252,8 +254,8 @@ export function CheckoutPage() {
     setFieldErrors({});
     clearDraft();
 
-    // Save booking to localStorage IMMEDIATELY (before the processing timeout)
-    const bookingId = Date.now().toString(36);
+    // Save booking to localStorage IMMEDIATELY
+    const bookingId = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const newBooking = {
       id: bookingId,
       tourId: tour.id,
@@ -269,25 +271,60 @@ export function CheckoutPage() {
       customerEmail: b.customerEmail,
       customerPhone: b.customerPhone,
     };
-    // Safely save booking to localStorage (handles corrupted data gracefully)
+    console.log("[Checkout] newBooking object:", newBooking);
+
+    // SAVE to localStorage with proper error handling
+    let saveSuccess = false;
     try {
-      // Try reading existing data
+      // Get existing bookings
       let existing: any[] = [];
+      const raw = localStorage.getItem("travellog_bookings");
+      console.log("[Checkout] raw localStorage:", raw);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) existing = parsed;
+        } catch (parseErr) {
+          console.warn("[Checkout] corrupted data, starting fresh", parseErr);
+          existing = [];
+        }
+      }
+      existing.unshift(newBooking);
+      const jsonStr = JSON.stringify(existing.slice(0, 50));
+      localStorage.setItem("travellog_bookings", jsonStr);
+      console.log("[Checkout] saved", existing.length, "bookings");
+
+      // VERIFY: read it back immediately
+      const verifyRaw = localStorage.getItem("travellog_bookings");
+      if (verifyRaw) {
+        const verifyParsed = JSON.parse(verifyRaw);
+        const found = Array.isArray(verifyParsed) && verifyParsed.find((x: any) => x.id === bookingId);
+        console.log("[Checkout] verification:", found ? "✅ FOUND" : "❌ NOT FOUND");
+        saveSuccess = !!found;
+      }
+    } catch (saveErr) {
+      console.error("[Checkout] localStorage save FAILED:", saveErr);
+      saveSuccess = false;
+    }
+
+    if (!saveSuccess) {
+      showToast("⚠️ Could not save booking. Trying alternative storage...", "info");
+      // Fallback: try sessionStorage
       try {
-        const raw = localStorage.getItem("travellog_bookings");
+        let existing: any[] = [];
+        const raw = sessionStorage.getItem("travellog_bookings_fallback");
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) existing = parsed;
         }
-      } catch {
-        // Corrupted data — start fresh
-        existing = [];
+        existing.unshift(newBooking);
+        sessionStorage.setItem("travellog_bookings_fallback", JSON.stringify(existing.slice(0, 50)));
+        console.log("[Checkout] saved to sessionStorage fallback");
+      } catch (fallbackErr) {
+        console.error("[Checkout] sessionStorage fallback ALSO failed:", fallbackErr);
+        showToast("❌ Booking save failed. Please try again.", "info");
+        return; // Don't proceed to processing
       }
-      existing.unshift(newBooking);
-      localStorage.setItem("travellog_bookings", JSON.stringify(existing.slice(0, 50)));
-    } catch {
-      // If save fails, show confirmed anyway — booking data is still in memory
-      showToast("Booking saved!", "success");
     }
 
     setStep("processing");
@@ -403,7 +440,7 @@ export function CheckoutPage() {
           </div>
 
           <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => navigate("/dashboard")}>
+            <Button variant="outline" onClick={() => navigate("/my-bookings")}>
               View My Bookings
             </Button>
             <Button onClick={() => navigate("/tours")}>
