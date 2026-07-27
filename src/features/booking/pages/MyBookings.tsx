@@ -14,7 +14,9 @@ import { tours } from "@/features/tours/data/tours";
 interface TravelerInfo {
   name: string;
   age: string;
+  gender: string;
   phone: string;
+  location: string;
 }
 
 interface Booking {
@@ -60,7 +62,8 @@ export function MyBookingsPage() {
   const bookings = useMemo(() => getBookings(), [refreshKey]);
 
   const totalSpent = bookings.reduce((sum, b) => sum + b.totalPaid, 0);
-  const activeBookings = bookings.filter((b) => b.status === "confirmed").length;
+  const activeBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "pending").length;
+  const pendingCount = bookings.filter((b) => b.status === "pending").length;
 
   const statuses = useMemo(() => {
     const set = new Set(bookings.map((b) => b.status));
@@ -132,10 +135,9 @@ export function MyBookingsPage() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
         >
-          {[
-            { icon: TicketCheck, label: "Total Bookings", value: bookings.length, color: "#f59e0b" },
+          {[            {icon: TicketCheck, label: "Total Bookings", value: bookings.length, color: "#f59e0b" },
             { icon: Calendar, label: "Active", value: activeBookings, color: "#22c55e" },
-            { icon: Users, label: "Total Travelers", value: bookings.reduce((s, b) => s + b.travelers, 0), color: "#3b82f6" },
+            { icon: Users, label: "Pending", value: pendingCount, color: "#eab308" },
             { icon: Star, label: "Total Spent", value: `₹${totalSpent.toLocaleString()}`, color: "#ec4899" },
           ].map((stat, i) => (
             <div
@@ -277,10 +279,10 @@ export function MyBookingsPage() {
                           {booking.tourName}
                         </h3>
                         <Badge
-                          variant={booking.status === "confirmed" ? "success" : "default"}
+                          variant={booking.status === "confirmed" ? "success" : booking.status === "pending" ? "warning" : "default"}
                           className="text-[10px] capitalize"
                         >
-                          {booking.status}
+                          {booking.status === "pending" ? "⏳ Pending" : booking.status}
                         </Badge>
                         {booking.coupon && (
                           <Badge variant="outline" className="text-[10px] text-accent border-accent/30">

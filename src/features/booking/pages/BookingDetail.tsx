@@ -14,7 +14,9 @@ import { downloadItinerary } from "@/utils/downloadItinerary";
 interface TravelerInfo {
   name: string;
   age: string;
+  gender: string;
   phone: string;
+  location: string;
 }
 
 interface Booking {
