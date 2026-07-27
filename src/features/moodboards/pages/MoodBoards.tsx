@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/services/auth-context";
-import { useMoodBoards } from "@/services/storage-service";
+import { useMoodBoards } from "@/services/storageService";
 
 const boardColors = [
   "#3b82f6", "#10b981", "#f59e0b", "#ef4444",

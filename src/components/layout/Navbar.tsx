@@ -8,10 +8,10 @@ import {
   Sun, Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-context";
-import { useTheme } from "@/lib/theme-provider";
-import { tours, type Tour } from "@/data/tours";
+import { cn } from "@/utils/cn";
+import { useAuth } from "@/features/auth/services/auth-context";
+import { useTheme } from "@/hooks/use-theme";
+import { tours, type Tour } from "@/features/tours/data/tours";
 
 const navLinks = [
   { label: "Home", href: "/" },

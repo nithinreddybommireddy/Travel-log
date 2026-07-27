@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tours } from "@/features/tours/data/tours";
 import { useAuth } from "@/features/auth/services/auth-context";
-import { useMoodBoards } from "@/services/storage-service";
+import { useMoodBoards } from "@/services/storageService";
 
 export function MoodBoardDetailPage() {
   const { id } = useParams();

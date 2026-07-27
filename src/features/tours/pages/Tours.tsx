@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { tours, categories, priceTiers, getPriceTierInfo, type TourCategory, type PriceTier } from "@/features/tours/data/tours";
 import { useAuth } from "@/features/auth/services/auth-context";
-import { useSavedTours } from "@/services/storage-service";
+import { useSavedTours } from "@/services/storageService";
 import { useToast } from "@/hooks/use-toast";
 
 const difficultyColors = {

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Clock, Star, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getShortTripsByTourId, shortTripCategories } from "@/data/short-trips";
+import { getShortTripsByTourId, shortTripCategories } from "@/features/tours/data/short-trips";
 
 interface ShortTripsSectionProps {
   tourId: string;

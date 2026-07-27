@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { sendContactEmail, subscribeNewsletter } from "@/services/email-service";
+import { sendContactEmail, subscribeNewsletter } from "@/services/emailService";
 
 export function Contact() {
   const { showToast } = useToast();

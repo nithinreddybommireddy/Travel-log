@@ -17,7 +17,7 @@ import { tours, categories } from "@/features/tours/data/tours";
 import { getShortTripsByTourId } from "@/features/tours/data/short-trips";
 import { getFoodByTourId, foodTypes } from "@/features/tours/data/food";
 import { useAuth } from "@/features/auth/services/auth-context";
-import { useSavedTours, useFoodReviews } from "@/services/storage-service";
+import { useSavedTours, useFoodReviews } from "@/services/storageService";
 import { useToast } from "@/hooks/use-toast";
 import { StarRating } from "@/components/ui/star-rating";
 

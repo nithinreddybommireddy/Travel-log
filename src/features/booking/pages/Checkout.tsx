@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { tours } from "@/features/tours/data/tours";
 import { offerCodes, specialOffers, validateOfferCode } from "@/features/booking/data/offers";
 import { useToast } from "@/hooks/use-toast";
-import { sendBookingConfirmation } from "@/services/email-service";
+import { sendBookingConfirmation } from "@/services/emailService";
 
 type PaymentMethod = "card" | "upi" | "netbanking";
 

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { TourMap } from "@/components/ui/tour-map";
 import { ShortTripsSection } from "@/components/ui/short-trips-section";
 import { tours } from "@/features/tours/data/tours";
-import { downloadItinerary } from "@/utils/download-itinerary";
+import { downloadItinerary } from "@/utils/downloadItinerary";
 
 interface Booking {
   id: string;
