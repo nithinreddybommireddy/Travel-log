@@ -5,7 +5,8 @@ import {
   ArrowLeft, Shield, Smartphone,
   CheckCircle2, BadgePercent, Users, Ticket, Loader2,
   Mail, MessageSquare, MessageCircle, CalendarDays,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, CreditCard, Landmark, Wallet,
+  ExternalLink, Copy, Check,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,6 @@ import { tours } from "@/features/tours/data/tours";
 import { offerCodes, validateOfferCode } from "@/features/booking/data/offers";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { sendBookingConfirmation } from "@/services/emailService";
 import { sendBookingConfirmationEmail } from "@/services/emailjsService";
 import {
   sendWhatsAppConfirmation,
@@ -145,6 +145,10 @@ export function CheckoutPage() {
   const [page, setPage] = useState<"form" | "processing" | "confirmed">("form");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [datePage, setDatePage] = useState(0);
+  const [pendingBookingId, setPendingBookingId] = useState<string>("");
+  const [confirmedBookingId, setConfirmedBookingId] = useState<string>("");
+  const [confirming, setConfirming] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | "cards" | "netbanking" | "wallet">("upi");
 
   const [offerInput, setOfferInput] = useState("");
   const [appliedOffer, setAppliedOffer] = useState<{ code: string; discount: number } | null>(null);
@@ -245,7 +249,7 @@ export function CheckoutPage() {
 
   const UPI_ID = "6301820703@slc";
 
-  const handlePay = async () => {
+  const handlePay = () => {
     // Read DOM fallback for autofilled values
     let b = formRef.current;
 
@@ -316,7 +320,8 @@ export function CheckoutPage() {
       customerEmail: b.customerEmail,
       customerPhone: b.customerPhone,
       travelerDetails: b.travelerDetails,
-      paymentId: "UPI-" + Date.now().toString(36).toUpperCase(),
+      paymentMethod: paymentMethod,
+      paymentId: paymentMethod.toUpperCase() + "-" + Date.now().toString(36).toUpperCase(),
     };
 
     try {
@@ -347,55 +352,94 @@ export function CheckoutPage() {
       }
     }
 
+    setPendingBookingId(bookingId);
+    setPage("processing");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    showToast("📱 Please complete the payment to confirm your booking", "info");
+  };
+
+  const confirmPayment = async () => {
+    if (confirming) return;
+    setConfirming(true);
+
+    // Update the booking status from "pending" to "confirmed" in localStorage
+    try {
+      const raw = localStorage.getItem("travellog_bookings");
+      if (raw) {
+        const bookings = JSON.parse(raw);
+        const idx = bookings.findIndex((b: any) => b.id === pendingBookingId);
+        if (idx !== -1) {
+          bookings[idx].status = "confirmed";
+          bookings[idx].paymentConfirmedAt = Date.now();
+          localStorage.setItem("travellog_bookings", JSON.stringify(bookings));
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    setConfirmedBookingId(pendingBookingId);
     setPage("confirmed");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    showToast("Booking confirmed! 🎉", "success");
+    showToast("Payment confirmed! Booking confirmed. 🎉", "success");
 
-    // Auto-send email confirmation in background
+    const b = formRef.current;
+
+    // Send booking confirmation email
     if (b.customerEmail?.trim()) {
       const travelerSummary = b.travelerDetails
         .map(
           (t, i) =>
-            `${i + 1}. ${t.name} (${t.age}, ${t.gender}) — ${t.location} — 📞${t.phone}`
+            `${i + 1}. ${t.name}
+Age: ${t.age}
+Gender: ${t.gender}
+Location: ${t.location}
+Phone: ${t.phone}`
         )
-        .join("\n");
-      sendBookingConfirmationEmail({
-        to_name: b.customerName || "Traveler",
-        to_email: b.customerEmail,
-        tour_name: tour.name,
-        tour_location: tour.location,
-        start_date: b.startDate,
-        travelers: b.travelers,
-        total_paid: "₹" + total.toLocaleString(),
-        discount: discount > 0 ? "-₹" + discount.toLocaleString() : "₹0",
-        coupon: appliedOffer?.code || "None",
-        booking_id: bookingId,
-        status: "Pending",
-        traveler_details: travelerSummary,
-        from_name: "Travel Log",
-        reply_to: b.customerEmail,
-      }).then((result) => {
+        .join("\n\n");
+
+      try {
+        const result = await sendBookingConfirmationEmail({
+          to_name: b.customerName || "Traveler",
+          to_email: b.customerEmail.trim(),
+          tour_name: tour.name,
+          tour_location: tour.location,
+          start_date: b.startDate,
+          travelers: b.travelers,
+          total_paid: "₹" + total.toLocaleString("en-IN"),
+          discount:
+            discount > 0
+              ? "-₹" + discount.toLocaleString("en-IN")
+              : "₹0",
+          coupon: appliedOffer?.code || "No coupon applied",
+          booking_id: pendingBookingId.toUpperCase(),
+          status: "CONFIRMED",
+          traveler_details: travelerSummary,
+        });
+
         if (result.success) {
           console.log("✅ Booking confirmation email sent");
+          showToast(
+            "Booking confirmed! Confirmation email sent.",
+            "success"
+          );
         } else {
-          // Fallback to mailto
-          sendBookingConfirmation(
-            {
-              id: bookingId,
-              tourName: tour.name,
-              location: tour.location,
-              startDate: b.startDate,
-              travelers: b.travelers,
-              totalPaid: total,
-              discount: discount,
-              coupon: appliedOffer?.code || null,
-              status: "confirmed",
-            },
-            b.customerEmail
+          console.error("❌ Email failed:", result.message);
+          showToast(
+            "Booking confirmed, but confirmation email could not be sent.",
+            "info"
           );
         }
-      });
+      } catch (emailError) {
+        console.error("❌ Email error:", emailError);
+        showToast(
+          "Booking confirmed, but confirmation email could not be sent.",
+          "info"
+        );
+      }
     }
+
+    setConfirming(false);
   };
 
   // ===== CONFIRMED VIEW =====
@@ -431,7 +475,7 @@ export function CheckoutPage() {
               ["📅 Start Date", form.startDate],
               ["👥 Travelers", form.travelers + " traveler" + (form.travelers > 1 ? "s" : "")],
               ["💰 Total Paid", "₹" + total.toLocaleString()],
-              ["🆔 Booking ID", "#" + Date.now().toString(36).toUpperCase()],
+              ["🆔 Booking ID", "#" + confirmedBookingId.toUpperCase()],
             ].map(([label, value]) => (
               <div key={label as string} className="flex justify-between text-sm">
                 <span className="text-text-muted">{label}</span>
@@ -497,39 +541,6 @@ export function CheckoutPage() {
             )}
           </div>
 
-          {/* Email */}
-          <div className="bg-accent/5 border border-accent/20 rounded-2xl p-5 mb-6 text-left">
-            <div className="flex items-center gap-3 mb-3">
-              <Mail className="w-5 h-5 text-accent" />
-              <span className="font-semibold text-sm">Get Email Confirmation</span>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="email" placeholder="your@email.com"
-                defaultValue={form.customerEmail}
-                id="confirm-email" name="confirmEmail" autoComplete="email"
-                className="flex-1 bg-surface-lighter/40 border border-border-light rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent/50 transition-colors"
-              />
-              <Button
-                variant="secondary" className="gap-2 shrink-0"
-                onClick={() => {
-                  const email = (document.getElementById("confirm-email") as HTMLInputElement)?.value.trim();
-                  if (!email || !email.includes("@")) {
-                    showToast("Please enter a valid email address", "info");
-                    return;
-                  }
-                  sendBookingConfirmation(
-                    { id: "", tourName: tour.name, location: tour.location, startDate: form.startDate, travelers: form.travelers, totalPaid: total, discount, coupon: appliedOffer?.code || null, status: "confirmed" },
-                    email
-                  );
-                  showToast("Confirmation email opened! ✉️", "success");
-                }}
-              >
-                <Mail className="w-4 h-4" /> Send
-              </Button>
-            </div>
-          </div>
-
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => navigate("/my-bookings")}>View My Bookings</Button>
             <Button onClick={() => navigate("/tours")}>Explore More Tours</Button>
@@ -539,24 +550,195 @@ export function CheckoutPage() {
     );
   }
 
-  // ===== PROCESSING VIEW =====
+  // ===== PROCESSING VIEW (Payment Pending) =====
   if (page === "processing") {
     return (
       <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-            className="w-16 h-16 rounded-full border-4 border-accent/30 border-t-accent mx-auto mb-6"
-          />
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-            <h2 className="text-2xl font-bold mb-2">Processing Payment</h2>
-            <p className="text-text-secondary">Please wait while we securely process your payment...</p>
-            <div className="flex items-center justify-center gap-2 mt-4 text-sm text-text-muted">
-              <Shield className="w-4 h-4 text-green-400" /> Secured with 256-bit encryption
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-lg mx-auto px-4"
+        >
+          <div className="text-center mb-8">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className={
+                "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 " +
+                (paymentMethod === "upi" ? "bg-yellow-500/10" :
+                 paymentMethod === "cards" ? "bg-blue-500/10" :
+                 paymentMethod === "netbanking" ? "bg-emerald-500/10" :
+                 "bg-orange-500/10")
+              }
+            >
+              {paymentMethod === "upi" && <Smartphone className="w-10 h-10 text-yellow-400" />}
+              {paymentMethod === "cards" && <CreditCard className="w-10 h-10 text-blue-400" />}
+              {paymentMethod === "netbanking" && <Landmark className="w-10 h-10 text-emerald-400" />}
+              {paymentMethod === "wallet" && <Wallet className="w-10 h-10 text-orange-400" />}
+            </motion.div>
+            <h1 className="text-2xl font-bold mb-2">Complete Your Payment</h1>
+            <p className="text-text-secondary text-sm">
+              Your booking has been saved. Please complete the payment via <strong className="text-text-primary">
+                {paymentMethod === "upi" ? "UPI" : paymentMethod === "cards" ? "Card" : paymentMethod === "netbanking" ? "Net Banking" : "Wallet"}
+              </strong> to confirm.
+            </p>
+          </div>
+
+          {/* Payment Method Details */}
+          {paymentMethod === "upi" && (
+            <div className="rounded-2xl border-2 border-dashed border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/[0.02] p-6 mb-6">
+              <div className="flex flex-col items-center gap-4">
+                <div className="bg-white rounded-xl p-2 shadow-sm">
+                  <img
+                    src={"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent("upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name))}
+                    alt="Scan to pay via UPI"
+                    className="w-44 h-44 rounded-lg"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-text-muted mb-1">UPI ID</p>
+                  <p className="text-lg font-bold text-green-400 break-all mb-2">{UPI_ID}</p>
+                  <div className="text-sm font-medium">
+                    Amount: <span className="text-accent text-2xl font-bold">₹{total.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button
+                    variant="secondary" className="gap-1.5 text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(UPI_ID);
+                      showToast("UPI ID copied! 📋", "success");
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5" /> Copy UPI ID
+                  </Button>
+                  <Button
+                    className="gap-1.5 text-xs bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => {
+                      const upiUrl = "upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name);
+                      window.open(upiUrl, "_blank");
+                    }}
+                  >
+                    <Smartphone className="w-3.5 h-3.5" /> Pay via UPI
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 justify-center pt-2 border-t border-yellow-500/20 w-full">
+                  <p className="text-[10px] text-text-muted w-full text-center mb-1">On desktop? Scan QR with phone or use:</p>
+                  <a href="https://pay.google.com/gp/p/ui/pay" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20">
+                    <ExternalLink className="w-3 h-3" /> Google Pay Web
+                  </a>
+                  <a href="https://www.phonepe.com/" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20">
+                    <ExternalLink className="w-3 h-3" /> PhonePe
+                  </a>
+                  <a href="https://paytm.com/" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20">
+                    <ExternalLink className="w-3 h-3" /> Paytm
+                  </a>
+                </div>
+              </div>
             </div>
-          </motion.div>
-        </div>
+          )}
+
+          {paymentMethod === "cards" && (
+            <div className="rounded-2xl border-2 border-dashed border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-500/[0.02] p-6 mb-6 text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <CreditCard className="w-6 h-6 text-blue-400" />
+                <span className="text-sm font-semibold">Credit / Debit Card</span>
+              </div>
+              <p className="text-2xl font-bold text-accent mb-3">₹{total.toLocaleString()}</p>
+              <p className="text-xs text-text-muted mb-4">
+                Enter your card details on the secure payment page to complete the transaction.
+              </p>
+              <Button
+                className="gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => {
+                  showToast("💳 Opening secure card payment page...", "info");
+                }}
+              >
+                <ExternalLink className="w-4 h-4" /> Proceed to Card Payment
+              </Button>
+            </div>
+          )}
+
+          {paymentMethod === "netbanking" && (
+            <div className="rounded-2xl border-2 border-dashed border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-emerald-500/[0.02] p-6 mb-6 text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Landmark className="w-6 h-6 text-emerald-400" />
+                <span className="text-sm font-semibold">Net Banking</span>
+              </div>
+              <p className="text-2xl font-bold text-accent mb-3">₹{total.toLocaleString()}</p>
+              <p className="text-xs text-text-muted mb-4">
+                You will be redirected to your bank's website to complete the payment.
+              </p>
+              <Button
+                className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+                onClick={() => {
+                  showToast("🏦 Redirecting to bank page...", "info");
+                }}
+              >
+                <ExternalLink className="w-4 h-4" /> Continue on Bank Website
+              </Button>
+            </div>
+          )}
+
+          {paymentMethod === "wallet" && (
+            <div className="rounded-2xl border-2 border-dashed border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-orange-500/[0.02] p-6 mb-6 text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Wallet className="w-6 h-6 text-orange-400" />
+                <span className="text-sm font-semibold">Wallet</span>
+              </div>
+              <p className="text-2xl font-bold text-accent mb-3">₹{total.toLocaleString()}</p>
+              <p className="text-xs text-text-muted mb-4">
+                You will be redirected to your wallet to complete the payment.
+              </p>
+              <Button
+                className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                onClick={() => {
+                  showToast("💰 Redirecting to wallet...", "info");
+                }}
+              >
+                <ExternalLink className="w-4 h-4" /> Continue to Wallet
+              </Button>
+            </div>
+          )}
+
+          {/* Confirm after payment */}
+          <div className="rounded-2xl border border-border-light bg-surface-lighter/20 p-6 text-center">
+            <p className="text-sm text-text-muted mb-4">
+              Already made the payment? Click below to confirm your booking.
+            </p>
+            <Button
+              size="lg" className="w-full gap-2 text-base bg-green-500 hover:bg-green-600 text-white"
+              onClick={confirmPayment}
+              disabled={confirming}
+            >
+              {confirming ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Confirming…</>
+              ) : (
+                <><CheckCircle2 className="w-5 h-5" /> I've Completed the Payment — Confirm Booking</>
+              )}
+            </Button>
+            <p className="text-[10px] text-text-muted mt-3 flex items-center justify-center gap-1">
+              <Shield className="w-3 h-3 text-green-400" /> Your booking is saved as pending until payment is confirmed
+            </p>
+          </div>
+
+          {/* Back button */}
+          <div className="text-center mt-4">
+            <button
+              onClick={() => {
+                setPage("form");
+                setStep(3);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="text-sm text-text-muted hover:text-text-primary transition-colors underline underline-offset-4"
+            >
+              ← Back to Payment Details
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -1078,7 +1260,7 @@ export function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Payment Section - QR + UPI + Cards */}
+                {/* Payment Section - Method Selector Only */}
                 <div className="mt-6 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -1086,74 +1268,54 @@ export function CheckoutPage() {
                     </div>
                     <div>
                       <h2 className="font-semibold text-lg">Payment</h2>
-                      <p className="text-xs text-text-muted">Scan QR or pay via UPI / Cards / Net Banking</p>
+                      <p className="text-xs text-text-muted">Choose your payment method to proceed</p>
                     </div>
                   </div>
 
-                  {/* QR Code + UPI ID Side by Side */}
-                  <div className="flex flex-col sm:flex-row items-center gap-6 bg-surface-lighter/30 border-2 border-dashed border-green-500/30 rounded-xl p-6">
-                    {/* QR Code */}
-                    <div className="shrink-0 bg-white rounded-xl p-2 shadow-sm">
-                      <img
-                        src={"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent("upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name))}
-                        alt="Scan to pay via UPI"
-                        className="w-40 h-40 sm:w-44 sm:h-44 rounded-lg"
-                      />
-                    </div>
-
-                    {/* UPI Details */}
-                    <div className="flex-1 text-center sm:text-left space-y-3">
-                      <div>
-                        <p className="text-xs text-text-muted mb-1">Scan QR with any UPI app</p>
-                        <p className="text-lg font-bold text-green-400 break-all">{UPI_ID}</p>
-                      </div>
-                      <div className="text-sm font-medium">
-                        Amount: <span className="text-accent text-xl font-bold">₹{total.toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                        <Button
-                          variant="secondary" className="gap-1.5 text-xs h-9"
-                          onClick={() => {
-                            navigator.clipboard.writeText(UPI_ID);
-                            showToast("UPI ID copied! 📋", "success");
-                          }}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Copy UPI ID
-                        </Button>
-                        <Button
-                          className="gap-1.5 text-xs h-9 bg-green-500 hover:bg-green-600 text-white"
-                          onClick={() => {
-                            const upiUrl = "upi://pay?pa=" + UPI_ID + "&pn=TravelLog&am=" + total + "&cu=INR&tn=Booking%20-%20" + encodeURIComponent(tour.name);
-                            window.open(upiUrl, "_blank");
-                            handlePay();
-                          }}
-                        >
-                          <Smartphone className="w-3.5 h-3.5" /> Pay ₹{total.toLocaleString()}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Payment Methods Display */}
+                  {/* Payment Method Selector */}
                   <div>
-                    <p className="text-xs text-text-muted text-center mb-3">Accepted payment methods:</p>
+                    <p className="text-xs text-text-muted text-center mb-3">Select payment method:</p>
                     <div className="grid grid-cols-4 gap-2">
                       {[
-                        { label: "UPI", sub: "GPay, PhonePe" },
-                        { label: "Cards", sub: "Credit/Debit" },
-                        { label: "Net Banking", sub: "All banks" },
-                        { label: "Wallet", sub: "Paytm, Amazon" },
+                        { id: "upi" as const, label: "UPI", sub: "GPay, PhonePe", icon: Smartphone },
+                        { id: "cards" as const, label: "Cards", sub: "Credit/Debit", icon: CreditCard },
+                        { id: "netbanking" as const, label: "Net Banking", sub: "All banks", icon: Landmark },
+                        { id: "wallet" as const, label: "Wallet", sub: "Paytm, Amazon", icon: Wallet },
                       ].map((m) => (
-                        <div key={m.label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-surface-lighter/30 border border-border-light">
-                          <span className="text-xs font-semibold text-text-primary">{m.label}</span>
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setPaymentMethod(m.id)}
+                          className={
+                            "relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all " +
+                            (paymentMethod === m.id
+                              ? "border-accent bg-accent/10 shadow-sm shadow-accent/10 ring-1 ring-accent/30"
+                              : "border-border-light bg-surface-lighter/30 hover:border-accent/40 hover:bg-accent/5")
+                          }
+                        >
+                          <m.icon className={"w-5 h-5 " + (paymentMethod === m.id ? "text-accent" : "text-text-muted")} />
+                          <span className={"text-xs font-semibold " + (paymentMethod === m.id ? "text-accent" : "text-text-primary")}>{m.label}</span>
                           <span className="text-[9px] text-text-muted text-center leading-tight">{m.sub}</span>
-                        </div>
+                          {paymentMethod === m.id && (
+                            <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-accent rounded-full flex items-center justify-center">
+                              <Check className="w-2.5 h-2.5 text-white" />
+                            </span>
+                          )}
+                        </button>
                       ))}
                     </div>
                   </div>
 
+                  {/* Proceed Button */}
+                  <Button
+                    size="lg" className="w-full gap-2 text-base"
+                    onClick={handlePay}
+                  >
+                    Proceed to Pay ₹{total.toLocaleString()} via {paymentMethod === "upi" ? "UPI" : paymentMethod === "cards" ? "Card" : paymentMethod === "netbanking" ? "Net Banking" : "Wallet"}
+                  </Button>
+
                   <p className="text-[10px] text-text-muted text-center">
-                    🔒 After paying, your booking will be confirmed instantly.
+                    🔒 Your payment is processed securely. After paying, confirm your booking on the next screen.
                   </p>
                 </div>
 
